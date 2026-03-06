@@ -43,8 +43,12 @@ class ReportService:
         self._upload_id = upload_id
         self._live_report_dict: Optional[Dict] = None
         self._static_findings: List[Dict] = []
+        self._xss_findings: List[Dict] = []
+        self._cors_findings: List[Dict] = []
+        self._ddos_findings: List[Dict] = []
         self._crawled_endpoints: List[Dict] = []
         self._pipeline_events: List[Dict] = []
+        self._sandbox_status: Dict = {}
         self._built: Optional[Dict] = None
 
     # ── Setters (called by scan_controller) ───────────────────────────
@@ -69,6 +73,35 @@ class ReportService:
     def set_crawled_endpoints(self, endpoints: List[Dict]) -> None:
         """Accept the crawled endpoints as a list of dicts."""
         self._crawled_endpoints = endpoints or []
+
+    def set_xss_findings(self, findings: List[Dict]) -> None:
+        """Accept XSS findings produced by XSSRunner."""
+        self._xss_findings = findings or []
+
+    def set_cors_findings(self, findings: List[Dict]) -> None:
+        """Accept CORS misconfiguration findings produced by CORSRunner."""
+        self._cors_findings = findings or []
+
+    def set_ddos_findings(self, findings: List[Dict]) -> None:
+        """Accept DDoS vulnerability findings produced by DDoSRunner."""
+        self._ddos_findings = findings or []
+
+    def set_sandbox_status(
+        self,
+        success: bool,
+        target_url: str = "",
+        error: str = "",
+        logs: List[str] = None,
+        fallback: str = "Static code analysis performed instead.",
+    ) -> None:
+        """Record sandbox launch outcome for the report."""
+        self._sandbox_status = {
+            "success": success,
+            "target_url": target_url,
+            "error": error,
+            "logs": (logs or [])[-20:],   # keep last 20 log lines
+            "fallback": "" if success else fallback,
+        }
 
     def add_event(self, stage: str, message: str, success: bool = True) -> None:
         """Record a pipeline event (for audit / debugging)."""
@@ -127,8 +160,50 @@ class ReportService:
                 elif "LOW" in severities:
                     overall_risk = "LOW"
 
-        vuln_count = len(vulnerabilities)
+        vuln_count   = len(vulnerabilities)
         static_count = len(deduped_static)
+
+        # Normalize and deduplicate XSS findings (Improvement 5)
+        xss_seen: set = set()
+        deduped_xss: List[Dict] = []
+        for f in self._xss_findings:
+            key = (f.get("endpoint", ""), f.get("parameter", ""), f.get("xss_type", ""))
+            if key not in xss_seen:
+                xss_seen.add(key)
+                deduped_xss.append(f)
+
+        # Normalize and deduplicate CORS findings (Improvement 5)
+        cors_seen: set = set()
+        deduped_cors: List[Dict] = []
+        for f in self._cors_findings:
+            key = (f.get("endpoint", ""), f.get("issue_type", ""), f.get("origin_sent", ""))
+            if key not in cors_seen:
+                cors_seen.add(key)
+                deduped_cors.append(f)
+
+        xss_count    = len(deduped_xss)
+        cors_count   = len(deduped_cors)
+
+        # Normalize and deduplicate DDoS findings
+        ddos_seen: set = set()
+        deduped_ddos: List[Dict] = []
+        for f in self._ddos_findings:
+            key = (f.get("endpoint", ""), f.get("attack_type", ""))
+            if key not in ddos_seen:
+                ddos_seen.add(key)
+                deduped_ddos.append(f)
+
+        ddos_count   = len(deduped_ddos)
+
+        # Escalate overall risk based on XSS, CORS, and DDoS findings
+        order = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+        for findings_list in (deduped_xss, deduped_cors, deduped_ddos):
+            if findings_list:
+                severities = {f.get("severity", "").upper() for f in findings_list}
+                max_sev = max(severities, key=lambda s: order.index(s) if s in order else 0)
+                if overall_risk in order and max_sev in order:
+                    if order.index(max_sev) > order.index(overall_risk):
+                        overall_risk = max_sev
 
         self._built = {
             "meta": {
@@ -141,18 +216,28 @@ class ReportService:
                 **scan_summary,
                 "overall_risk_level": overall_risk,
                 "total_vulnerabilities": vuln_count,
+                "total_xss_vulnerabilities": xss_count,
+                "total_cors_misconfigurations": cors_count,
+                "total_ddos_vulnerabilities": ddos_count,
                 "total_static_findings": static_count,
                 "total_endpoints_crawled": len(self._crawled_endpoints),
             },
             "vulnerabilities": vulnerabilities,
+            "xss_vulnerabilities": deduped_xss,
+            "cors_vulnerabilities": deduped_cors,
+            "ddos_vulnerabilities": deduped_ddos,
             "static_analysis_findings": deduped_static,
             "crawled_endpoints": self._crawled_endpoints,
+            "live_scan_status": self._sandbox_status,
             "pipeline_events": self._pipeline_events,
         }
 
         logger.info(
-            "[ReportService] Report built — %d vulns, %d static findings, risk=%s",
+            "[ReportService] Report built — %d SQL vulns, %d XSS findings, %d CORS findings, %d DDoS findings, %d static, risk=%s",
             vuln_count,
+            xss_count,
+            cors_count,
+            ddos_count,
             static_count,
             overall_risk,
         )
@@ -193,12 +278,33 @@ class ReportService:
             f"  Upload ID    : {d['meta'].get('upload_id', 'N/A')}",
             "─" * 60,
             f"  Overall Risk : {s.get('overall_risk_level', 'UNKNOWN')}",
-            f"  Vulnerabilities found   : {s.get('total_vulnerabilities', 0)}",
+            f"  SQL Injection vulns     : {s.get('total_vulnerabilities', 0)}",
+            f"  XSS vulnerabilities     : {s.get('total_xss_vulnerabilities', 0)}",
+            f"  CORS misconfigurations  : {s.get('total_cors_misconfigurations', 0)}",
+            f"  DDoS vulnerabilities    : {s.get('total_ddos_vulnerabilities', 0)}",
             f"  Static-analysis issues  : {s.get('total_static_findings', 0)}",
             f"  Endpoints crawled       : {s.get('total_endpoints_crawled', 0)}",
             f"  Payloads tested         : {s.get('total_payloads_tested', 0)}",
             "═" * 60,
         ]
+
+        # Live scan status block (Issue 3)
+        sb = d.get("live_scan_status", {})
+        if sb:
+            lines.append("  LIVE SCAN STATUS:")
+            if sb.get("success"):
+                lines.append(f"    Sandbox running at: {sb.get('target_url', 'N/A')}")
+            else:
+                lines.append(f"    Sandbox server could not start.")
+                if sb.get("error"):
+                    lines.append(f"    Reason  : {sb['error']}")
+                if sb.get("fallback"):
+                    lines.append(f"    Fallback: {sb['fallback']}")
+                if sb.get("logs"):
+                    lines.append("    Server logs:")
+                    for ln in sb["logs"][-5:]:
+                        lines.append(f"      {ln}")
+            lines.append("─" * 60)
 
         vulns = d.get("vulnerabilities", [])
         if vulns:
@@ -208,6 +314,40 @@ class ReportService:
                     f"    {i}. [{v.get('risk_level','?')}] {v.get('endpoint','?')} "
                     f"param={v.get('parameter','?')} — {v.get('vulnerability','?')}"
                 )
+            lines.append("─" * 60)
+
+        xss_vulns = d.get("xss_vulnerabilities", [])
+        if xss_vulns:
+            lines.append("  XSS VULNERABILITIES:")
+            for i, v in enumerate(xss_vulns, 1):
+                lines.append(
+                    f"    {i}. [{v.get('severity','?')}] {v.get('xss_type','?')} "
+                    f"— {v.get('endpoint','?')} param={v.get('parameter','?')} "
+                    f"({v.get('confidence','?')})"
+                )
+            lines.append("─" * 60)
+
+        cors_vulns = d.get("cors_vulnerabilities", [])
+        if cors_vulns:
+            lines.append("  CORS MISCONFIGURATIONS:")
+            for i, v in enumerate(cors_vulns, 1):
+                lines.append(
+                    f"    {i}. [{v.get('severity','?')}] {v.get('issue_type','?')} "
+                    f"— {v.get('endpoint','?')} origin={v.get('origin_sent','?')} "
+                    f"({v.get('confidence','?')})"
+                )
+            lines.append("─" * 60)
+
+        ddos_vulns = d.get("ddos_vulnerabilities", [])
+        if ddos_vulns:
+            lines.append("  DDOS VULNERABILITIES:")
+            for i, v in enumerate(ddos_vulns, 1):
+                lines.append(
+                    f"    {i}. [{v.get('severity','?')}] {v.get('attack_type','?')} "
+                    f"— {v.get('endpoint','?')}"
+                )
+                if v.get('observation'):
+                    lines.append(f"       {v['observation'][:120]}")
             lines.append("─" * 60)
 
         static = d.get("static_analysis_findings", [])

@@ -19,7 +19,9 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import sys
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional
 
 _BACKEND = os.path.dirname(os.path.abspath(__file__))
@@ -45,6 +47,34 @@ _SKIP_DIRS = {
 # Max file size to scan (512 KB) — skip minified bundles
 _MAX_FILE_SIZE = 512 * 1024
 
+# Directories that are guaranteed to contain frontend-only code
+_FRONTEND_DIRS = {
+    "components", "pages", "views", "ui", "hooks", "context", "store",
+    "reducers", "actions", "containers", "atoms", "molecules", "organisms",
+    "layouts", "screens", "features", "assets", "styles", "public", "static",
+    "__tests__", "test", "tests", "spec", "mocks",
+}
+
+# Directories that indicate backend/server-side code
+_BACKEND_DIRS = {
+    "server", "api", "routes", "controllers", "middleware", "models",
+    "services", "db", "database", "repo", "repository", "lib",
+}
+
+# File name patterns that identify frontend React/UI component files
+_FRONTEND_FILENAME_RE = re.compile(
+    r"(Component|Page|View|Screen|Layout|Widget|Dialog|Modal|Button|Form|Card|"
+    r"Header|Footer|Navbar|Sidebar|Panel|Container|Provider|Context|Reducer|Action"
+    r"|\.stories\.|\.test\.|\.spec\.)",
+    re.IGNORECASE,
+)
+
+
+# Top-level function so ProcessPoolExecutor can pickle it
+def _analyze_one_file(filepath: str) -> List[Dict]:
+    analyzer = StaticCodeAnalyzer()
+    return analyzer.analyze_file(filepath)
+
 
 class StaticScanRunner:
     """
@@ -56,10 +86,14 @@ class StaticScanRunner:
         Absolute path to the extracted upload.
     """
 
+    # Resource-aware concurrency: cap workers so we don't overwhelm the system
+    _MAX_WORKERS = min(32, (os.cpu_count() or 2) * 4)
+
     def __init__(self, project_dir: str):
         self.project_dir = project_dir
         self._analyzer = StaticCodeAnalyzer()
         self._findings: List[Dict] = []
+        self._scannable_files: Optional[List[str]] = None
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -76,10 +110,13 @@ class StaticScanRunner:
             return self._err(f"Project directory does not exist: {self.project_dir}")
 
         try:
+            # Collect scannable file list once and reuse it
+            self._scannable_files = self._collect_scannable_files()
+            files_scanned = len(self._scannable_files)
+
             # Use our own walk that skips node_modules, dist, etc.
             # (StaticCodeAnalyzer.analyze_directory doesn't skip them)
             self._findings = self._safe_analyze()
-            files_scanned = self._count_scannable_files()
 
             # Make file paths relative to project_dir for readability
             for f in self._findings:
@@ -111,41 +148,84 @@ class StaticScanRunner:
     # ── Helpers ───────────────────────────────────────────────────────
 
     def _safe_analyze(self) -> List[Dict]:
-        """Walk directory tree, skipping junk dirs and huge files."""
+        """Analyze files in parallel using ProcessPoolExecutor (CPU-bound)."""
+        files = self._scannable_files or self._collect_scannable_files()
+        if not files:
+            return []
+
         all_findings: List[Dict] = []
+
+        # ProcessPoolExecutor for true CPU parallelism; fallback to threads
+        try:
+            Executor = ProcessPoolExecutor
+            pool = Executor(max_workers=self._MAX_WORKERS)
+        except Exception:
+            Executor = ThreadPoolExecutor
+            pool = Executor(max_workers=self._MAX_WORKERS)
+
+        with pool:
+            future_to_file = {pool.submit(_analyze_one_file, f): f for f in files}
+            for future in as_completed(future_to_file):
+                try:
+                    all_findings.extend(future.result())
+                except Exception as exc:
+                    logger.debug("[StaticScanRunner] Error scanning %s: %s",
+                                 future_to_file[future], exc)
+        return all_findings
+
+    @staticmethod
+    def _is_backend_file(filepath: str, ext: str) -> bool:
+        """
+        Return True if this file is likely backend/server-side code that
+        could contain SQL injection vulnerabilities.
+
+        Rules:
+        - .py and .php are always backend.
+        - .tsx and .jsx are always React frontend — never backend SQL.
+        - .ts and .js are backend only if located in a backend directory
+          OR not in a known frontend directory.
+        - .html is skipped (templates may contain JS but not SQL logic).
+        """
+        if ext in (".py", ".php"):
+            return True
+        if ext in (".tsx", ".jsx", ".html", ".htm"):
+            return False
+        if ext in (".js", ".ts"):
+            # Normalise path separators and split into parts
+            parts = set(p.lower() for p in filepath.replace("\\", "/").split("/"))
+            # Explicit backend directory in path → scan it
+            if parts & _BACKEND_DIRS:
+                return True
+            # Explicit frontend directory → skip
+            if parts & _FRONTEND_DIRS:
+                return False
+            # Frontend filename pattern → skip
+            filename = os.path.basename(filepath)
+            if _FRONTEND_FILENAME_RE.search(filename):
+                return False
+            # Default: scan generic .js/.ts files (e.g. root-level server.js)
+            return True
+        return False
+
+    def _collect_scannable_files(self) -> List[str]:
+        """Walk once and return list of backend files eligible for scanning."""
+        result: List[str] = []
         for dirpath, dirnames, filenames in os.walk(self.project_dir):
-            # Prune directories we never want to enter
-            dirnames[:] = [
-                d for d in dirnames if d.lower() not in _SKIP_DIRS
-            ]
+            dirnames[:] = [d for d in dirnames if d.lower() not in _SKIP_DIRS]
             for fn in filenames:
                 ext = os.path.splitext(fn)[1].lower()
                 if ext not in _SCAN_EXTENSIONS:
                     continue
                 full = os.path.join(dirpath, fn)
                 try:
-                    size = os.path.getsize(full)
+                    if os.path.getsize(full) > _MAX_FILE_SIZE:
+                        continue
                 except OSError:
                     continue
-                if size > _MAX_FILE_SIZE:
-                    logger.debug("[StaticScanRunner] Skipping large file (%d KB): %s", size // 1024, fn)
+                if not self._is_backend_file(full, ext):
                     continue
-                all_findings.extend(self._analyzer.analyze_file(full))
-        return all_findings
-
-    def _count_scannable_files(self) -> int:
-        count = 0
-        for dirpath, dirnames, filenames in os.walk(self.project_dir):
-            dirnames[:] = [d for d in dirnames if d.lower() not in _SKIP_DIRS]
-            for fn in filenames:
-                ext = os.path.splitext(fn)[1].lower()
-                if ext in _SCAN_EXTENSIONS:
-                    try:
-                        if os.path.getsize(os.path.join(dirpath, fn)) <= _MAX_FILE_SIZE:
-                            count += 1
-                    except OSError:
-                        pass
-        return count
+                result.append(full)
+        return result
 
     @staticmethod
     def _err(msg: str) -> Dict[str, Any]:

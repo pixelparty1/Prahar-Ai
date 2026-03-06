@@ -9,18 +9,29 @@ Starting from the root URL it:
   • Parses REST-style routes
   • Returns a list of DiscoveredEndpoint-compatible dicts
 
+Performance optimizations:
+  • Fully async I/O via aiohttp (Opt 1 — async engine)
+  • Concurrent page fetches + probes via asyncio.gather (Opt 2)
+  • Connection pooling via TCPConnector (Opt 4)
+  • Semaphore-based rate control (Opt 14)
+  • URL normalization + dedup (Opt 7)
+
 Does NOT modify any AttackBot code.
 """
 
 from __future__ import annotations
 
+import asyncio
+import os
 import re
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse, parse_qs
 
-import requests
+import aiohttp
+
+from async_engine import AsyncHTTPClient, run_sync
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +96,10 @@ _COMMON_PROBES = [
 
 class Crawler:
     """
-    Crawl a live web application to discover endpoints.
+    Async crawler for live web application endpoint discovery.
+
+    Uses aiohttp for concurrent page fetching and probing, with
+    connection pooling and semaphore-based rate control.
 
     Parameters
     ----------
@@ -95,6 +109,8 @@ class Crawler:
         Maximum number of pages to fetch (default 50).
     timeout : float
         HTTP request timeout in seconds.
+    max_concurrent : int
+        Maximum number of concurrent HTTP requests.
     """
 
     def __init__(
@@ -102,36 +118,27 @@ class Crawler:
         base_url: str,
         max_pages: int = 50,
         timeout: float = 5.0,
+        max_concurrent: int = 20,
     ):
         self.base_url = base_url.rstrip("/")
         self.max_pages = max_pages
         self.timeout = timeout
+        self.max_concurrent = max_concurrent
         self._visited: Set[str] = set()
         self._endpoints: Set[CrawledEndpoint] = set()
-        self._session = requests.Session()
-        self._session.headers["User-Agent"] = "PrahaarCrawler/1.0"
 
     # ── Public API ────────────────────────────────────────────────────
 
     def crawl(self) -> List[CrawledEndpoint]:
         """
-        Run the crawl and return all discovered endpoints.
+        Run the crawl and return all discovered endpoints (sync API).
+        Internally uses async I/O for speed.
 
         Returns
         -------
         list[CrawledEndpoint]
         """
-        # Start with the root page
-        self._visit(self.base_url)
-
-        # Probe common paths that may not be linked
-        for probe_path in _COMMON_PROBES:
-            url = self.base_url + probe_path
-            if url not in self._visited and len(self._visited) < self.max_pages:
-                self._probe(probe_path)
-
-        self._session.close()
-        result = list(self._endpoints)
+        result = run_sync(self._crawl_async())
         logger.info("[Crawler] Discovered %d endpoints at %s", len(result), self.base_url)
         return result
 
@@ -147,25 +154,54 @@ class Crawler:
             for ep in self._endpoints
         ]
 
-    # ── Internal: visit a page ────────────────────────────────────────
+    # ── Core async implementation ─────────────────────────────────────
 
-    def _visit(self, url: str) -> None:
+    async def _crawl_async(self) -> List[CrawledEndpoint]:
+        """Full async crawl: visit root, then probe common paths concurrently."""
+        async with AsyncHTTPClient(
+            max_concurrent=self.max_concurrent,
+            timeout=self.timeout,
+            conn_limit=self.max_concurrent + 10,
+            user_agent="PrahaarCrawler/2.0",
+        ) as client:
+            # Phase 1: Visit root page and follow links
+            await self._visit_async(client, self.base_url)
+
+            # Phase 2: Probe common paths concurrently
+            probes = [
+                p for p in _COMMON_PROBES
+                if (self.base_url + p) not in self._visited
+                and len(self._visited) < self.max_pages
+            ]
+            if probes:
+                tasks = [self._probe_async(client, path) for path in probes]
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Sort deterministically so every run produces the same endpoint order
+        return sorted(
+            self._endpoints,
+            key=lambda ep: (ep.path, ep.method, tuple(sorted(ep.parameters))),
+        )
+
+    # ── Async visit (follows links recursively) ──────────────────────
+
+    async def _visit_async(self, client: AsyncHTTPClient, url: str) -> None:
         """Fetch a page and extract endpoints from its content."""
         if url in self._visited or len(self._visited) >= self.max_pages:
             return
         self._visited.add(url)
 
+        resp = await client.get(url, allow_redirects=True)
+        if resp is None or resp.status >= 400:
+            return
+
         try:
-            resp = self._session.get(url, timeout=self.timeout, allow_redirects=True)
-        except Exception as exc:
-            logger.debug("[Crawler] Failed to fetch %s: %s", url, exc)
+            body = await resp.text(errors="replace")
+        except Exception:
             return
 
-        if resp.status_code >= 400:
-            return
-
-        body = resp.text
         parsed_base = urlparse(self.base_url)
+        child_urls: List[str] = []
 
         # ── Extract <a href> links ────────────────────────────────────
         for match in _HREF_RE.finditer(body):
@@ -173,7 +209,6 @@ class Crawler:
             abs_url = urljoin(url, href)
             parsed = urlparse(abs_url)
 
-            # Only follow same-host links
             if parsed.netloc and parsed.netloc != parsed_base.netloc:
                 continue
 
@@ -181,9 +216,8 @@ class Crawler:
             params = list(parse_qs(parsed.query).keys())
             self._add_endpoint(path, "GET", params, "href")
 
-            # Recurse into internal pages
             if abs_url not in self._visited:
-                self._visit(abs_url)
+                child_urls.append(abs_url)
 
         # ── Extract <form> elements ───────────────────────────────────
         for form_match in _FORM_RE.finditer(body):
@@ -195,7 +229,6 @@ class Crawler:
             if parsed.netloc and parsed.netloc != parsed_base.netloc:
                 continue
 
-            # Find input fields within a reasonable range after the <form> tag
             form_start = form_match.start()
             form_chunk = body[form_start: form_start + 3000]
             params = (
@@ -203,7 +236,6 @@ class Crawler:
                 + _SELECT_RE.findall(form_chunk)
                 + _TEXTAREA_RE.findall(form_chunk)
             )
-            # Deduplicate, strip submit buttons
             params = list(dict.fromkeys(
                 p for p in params if p.lower() not in ("submit", "button", "csrf_token")
             ))
@@ -235,32 +267,57 @@ class Crawler:
             params = list(parse_qs(qs).keys())
             self._add_endpoint(path, "GET", params, "url_string")
 
-    # ── Internal: probe a path ────────────────────────────────────────
+        # ── Recursively visit child pages (concurrently) ──────────────
+        if child_urls:
+            tasks = [
+                self._visit_async(client, u) for u in child_urls
+                if u not in self._visited and len(self._visited) < self.max_pages
+            ]
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
 
-    def _probe(self, path: str) -> None:
-        """Try GET and POST to see if a path is alive."""
+    # ── Async probe ───────────────────────────────────────────────────
+
+    async def _probe_async(self, client: AsyncHTTPClient, path: str) -> None:
+        """Try GET first; if the path is alive, also try POST."""
         url = self.base_url + path
         if url in self._visited:
             return
         self._visited.add(url)
 
-        for method in ("GET", "POST"):
+        # GET probe first
+        resp = await client.request("GET", url, allow_redirects=False)
+        if resp is None or resp.status >= 404:
+            return  # path doesn't exist — skip POST too
+
+        # GET succeeded — extract params and record
+        params: List[str] = []
+        try:
+            text = await resp.text(errors="replace")
+            if text:
+                params.extend(_INPUT_RE.findall(text))
+                params.extend(_SELECT_RE.findall(text))
+                params = list(dict.fromkeys(
+                    p for p in params if p.lower() not in ("submit", "button")
+                ))
+        except Exception:
+            pass
+        self._add_endpoint(path, "GET", params, "probe")
+
+        # POST probe on the same live path
+        post_resp = await client.request("POST", url, allow_redirects=False)
+        if post_resp is not None and post_resp.status < 500:
+            post_params: List[str] = list(params)  # reuse GET params as base
             try:
-                resp = self._session.request(
-                    method, url, timeout=self.timeout, allow_redirects=False,
-                )
-                if resp.status_code < 500:
-                    # Alive — extract params from the response body
-                    params: List[str] = []
-                    if resp.text:
-                        params.extend(_INPUT_RE.findall(resp.text))
-                        params.extend(_SELECT_RE.findall(resp.text))
-                        params = list(dict.fromkeys(
-                            p for p in params if p.lower() not in ("submit", "button")
-                        ))
-                    self._add_endpoint(path, method, params, "probe")
+                post_text = await post_resp.text(errors="replace")
+                if post_text:
+                    extra = _INPUT_RE.findall(post_text) + _SELECT_RE.findall(post_text)
+                    for p in extra:
+                        if p.lower() not in ("submit", "button") and p not in post_params:
+                            post_params.append(p)
             except Exception:
                 pass
+            self._add_endpoint(path, "POST", post_params, "probe")
 
     # ── Internal: add endpoint ────────────────────────────────────────
 
@@ -272,9 +329,15 @@ class Crawler:
         source: str,
     ) -> None:
         """Add an endpoint to the set (auto-deduplicated via hash)."""
-        # Normalise path
+        # Normalise path (Opt 7 — endpoint deduplication)
         if not path.startswith("/"):
             path = "/" + path
+        # Collapse double slashes → single
+        while "//" in path:
+            path = path.replace("//", "/")
+        # Strip trailing slash (except root "/")
+        if path != "/" and path.endswith("/"):
+            path = path.rstrip("/")
 
         ep = CrawledEndpoint(
             path=path,

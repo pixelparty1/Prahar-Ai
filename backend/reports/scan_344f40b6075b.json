@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "generated_at": "2026-03-06T09:16:05.580869+00:00",
+    "upload_id": "344f40b6075b",
+    "target_url": "",
+    "generator": "Prahaar_AI ReportService v1.0"
+  },
+  "scan_summary": {
+    "overall_risk_level": "HIGH",
+    "total_vulnerabilities": 0,
+    "total_static_findings": 4,
+    "total_endpoints_crawled": 0
+  },
+  "vulnerabilities": [],
+  "static_analysis_findings": [
+    {
+      "file": "src\\components\\OffsetDialog.tsx",
+      "line": 227,
+      "code": "const royaltyWalletAddress = \"0x689Bd23a334AB15A58c01538BbfB0Ef04BCFA5fF\";",
+      "issue": "f-string SQL query with variable interpolation",
+      "severity": "HIGH"
+    },
+    {
+      "file": "src\\pages\\Dashboard.tsx",
+      "line": 99,
+      "code": "fontFamily: \"Inter, sans-serif\",",
+      "issue": "f-string SQL query with variable interpolation",
+      "severity": "HIGH"
+    },
+    {
+      "file": "src\\pages\\OffsetPage.tsx",
+      "line": 209,
+      "code": "const royaltyWalletAddress = \"0x689Bd23a334AB15A58c01538BbfB0Ef04BCFA5fF\";",
+      "issue": "f-string SQL query with variable interpolation",
+      "severity": "HIGH"
+    },
+    {
+      "file": "src\\pages\\UploadBill.tsx",
+      "line": 127,
+      "code": "const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:Z100');",
+      "issue": "f-string SQL query with variable interpolation",
+      "severity": "HIGH"
+    }
+  ],
+  "crawled_endpoints": [],
+  "pipeline_events": [
+    {
+      "timestamp": "2026-03-06T09:15:47.701548+00:00",
+      "stage": "upload",
+      "message": "Extracting CarbonIQLive-main.zip",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:15:47.813290+00:00",
+      "stage": "upload",
+      "message": "Extracted to C:\\Users\\Manan\\AppData\\Local\\Temp\\uploads\\project_344f40b6075b\\CarbonIQLive-main",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:15:47.813698+00:00",
+      "stage": "detect",
+      "message": "Detecting framework",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:15:47.818822+00:00",
+      "stage": "detect",
+      "message": "Detected: node",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:15:47.819076+00:00",
+      "stage": "sandbox",
+      "message": "Launching sandbox server",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.498024+00:00",
+      "stage": "sandbox",
+      "message": "Sandbox failed: Server did not respond within 60.0s on port 60653.",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.498291+00:00",
+      "stage": "crawl",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.498301+00:00",
+      "stage": "live_scan",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.498304+00:00",
+      "stage": "static_scan",
+      "message": "Running static code analysis",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.580717+00:00",
+      "stage": "static_scan",
+      "message": "Found 4 issues in 102 files",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T09:16:05.580850+00:00",
+      "stage": "report",
+      "message": "Building final report",
+      "success": true
+    }
+  ]
+}

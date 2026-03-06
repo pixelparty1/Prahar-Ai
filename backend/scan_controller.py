@@ -20,6 +20,7 @@ Does NOT modify any existing AttackBot code.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import sys
@@ -35,12 +36,20 @@ from framework_detector import FrameworkDetector
 from sandbox_manager import SandboxManager
 from crawler import Crawler
 from attackbot_runner import AttackBotRunner
+from xss_runner import XSSRunner
+from cors_runner import CORSRunner
+from ddos_runner import DDoSRunner
 from static_scan_runner import StaticScanRunner
 from report_service import ReportService
 from cleanup_manager import CleanupManager
 from AttackBot.SQL_Injections.sql_injection_scanner import ScanConfig
+from async_engine import run_sync
 
 logger = logging.getLogger(__name__)
+
+# Reduce noise from HTTP libraries during parallel scanning
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 class ScanController:
@@ -115,66 +124,162 @@ class ScanController:
                 ctx.sandbox_dir = self._sandbox.get_instance(ctx.sandbox_id).sandbox_dir if ctx.sandbox_id else None
                 report_svc._target_url = ctx.target_url
                 report_svc.add_event("sandbox", f"Server running at {ctx.target_url}")
-                logger.info("[ScanController] Step 3 OK — %s (PID %s)", ctx.target_url, ctx.sandbox_pid)
-            else:
-                report_svc.add_event("sandbox", f"Sandbox failed: {sb['error']}", success=False)
-                logger.warning("[ScanController] Step 3 WARN — sandbox failed: %s (will do static-only scan)", sb["error"])
-
-            # ── Step 4: Crawl (if sandbox is up) ──────────────────────
-            crawled_endpoints = []
-            if ctx.target_url:
-                report_svc.add_event("crawl", f"Crawling {ctx.target_url}")
-                try:
-                    cr = Crawler(ctx.target_url, max_pages=50, timeout=5.0)
-                    crawled_endpoints = cr.crawl()
-                    report_svc.set_crawled_endpoints(cr.get_endpoints_as_dicts())
-                    report_svc.add_event("crawl", f"Found {len(crawled_endpoints)} endpoints")
-                    logger.info("[ScanController] Step 4 OK — %d endpoints crawled", len(crawled_endpoints))
-                except Exception as exc:
-                    report_svc.add_event("crawl", f"Crawl error: {exc}", success=False)
-                    logger.warning("[ScanController] Step 4 WARN — crawl error: %s", exc)
-            else:
-                report_svc.add_event("crawl", "Skipped (no live server)", success=False)
-
-            # ── Step 5: Live scan (if sandbox is up) ──────────────────
-            if ctx.target_url:
-                report_svc.add_event("live_scan", "Running AttackBot live scan")
-                runner = AttackBotRunner(
+                report_svc.set_sandbox_status(
+                    success=True,
                     target_url=ctx.target_url,
-                    project_dir=ctx.upload_dir,
-                    config=self._scan_config,
+                    logs=sb.get("logs", []),
                 )
-                result = runner.run(
-                    crawled_endpoints=crawled_endpoints if crawled_endpoints else None,
-                    probe_live=True,
-                )
-                if result["success"] and result["report"]:
-                    report_svc.set_live_scan_report(result["report"])
-                    report_svc.add_event(
-                        "live_scan",
-                        f"Scan complete — {result['endpoints_scanned']} endpoints, "
-                        f"{len(result.get('scan_log', []))} payloads sent",
-                    )
-                    logger.info("[ScanController] Step 5 OK — live scan done")
-                else:
-                    report_svc.add_event("live_scan", f"Scan error: {result.get('error')}", success=False)
-                    logger.warning("[ScanController] Step 5 WARN — %s", result.get("error"))
+                logger.info("[ScanController] Step 3 OK \u2014 %s (PID %s)", ctx.target_url, ctx.sandbox_pid)
             else:
-                report_svc.add_event("live_scan", "Skipped (no live server)", success=False)
+                sandbox_err = sb.get("error", "Unknown sandbox error")
+                sandbox_logs = sb.get("logs", [])
+                report_svc.add_event("sandbox", f"Sandbox failed: {sandbox_err}", success=False)
+                report_svc.set_sandbox_status(
+                    success=False,
+                    error=sandbox_err,
+                    logs=sandbox_logs,
+                    fallback="Static code analysis performed instead.",
+                )
+                logger.warning("[ScanController] Step 3 WARN \u2014 sandbox failed: %s (will do static-only scan)", sandbox_err)
+                for ln in sandbox_logs[-5:]:
+                    logger.warning("  [sandbox log] %s", ln)
 
-            # ── Step 6: Static scan (always runs) ─────────────────────
-            report_svc.add_event("static_scan", "Running static code analysis")
-            static_runner = StaticScanRunner(ctx.upload_dir)
-            static_result = static_runner.run()
-            if static_result["success"]:
-                report_svc.set_static_findings(static_result["findings"])
-                report_svc.add_event(
-                    "static_scan",
-                    f"Found {len(static_result['findings'])} issues in {static_result['files_scanned']} files",
-                )
-                logger.info("[ScanController] Step 6 OK — static scan done")
-            else:
-                report_svc.add_event("static_scan", f"Static error: {static_result['error']}", success=False)
+            # ── Steps 4/5/5b/5c/6: Crawl + all scans ─────────────────────
+            # Static scan does NOT need crawl results, so it starts immediately
+            # while crawl is still running.  Live scans start once crawl finishes.
+            # Everything wrapped in one async block to maximise concurrency.
+            async def _crawl_and_scan():
+                # Launch static scan immediately (doesn't need endpoints)
+                report_svc.add_event("static_scan", "Running static code analysis")
+                static_task = asyncio.to_thread(self._run_static, ctx.upload_dir)
+
+                # Crawl in parallel with static scan
+                crawled = []
+                if ctx.target_url:
+                    report_svc.add_event("crawl", f"Crawling {ctx.target_url}")
+                    try:
+                        cr = Crawler(ctx.target_url, max_pages=50, timeout=5.0)
+                        crawled = await asyncio.to_thread(cr.crawl)
+                        report_svc.set_crawled_endpoints(cr.get_endpoints_as_dicts())
+                        report_svc.add_event("crawl", f"Found {len(crawled)} endpoints")
+                        logger.info("[ScanController] Step 4 OK — %d endpoints crawled", len(crawled))
+                    except Exception as exc:
+                        report_svc.add_event("crawl", f"Crawl error: {exc}", success=False)
+                        logger.warning("[ScanController] Step 4 WARN — crawl error: %s", exc)
+                else:
+                    report_svc.add_event("crawl", "Skipped (no live server)", success=False)
+
+                frozen = tuple(crawled)
+                tasks = {}
+
+                # Submit live scans (need crawl results)
+                if ctx.target_url:
+                    report_svc.add_event("live_scan", "Running AttackBot live scan")
+                    tasks["sqli"] = asyncio.to_thread(
+                        self._run_sqli, ctx.target_url, ctx.upload_dir, frozen,
+                    )
+                    report_svc.add_event("xss_scan", "Running XSS attack scan")
+                    tasks["xss"] = asyncio.to_thread(
+                        self._run_xss, ctx.target_url, ctx.upload_dir, frozen,
+                    )
+                    report_svc.add_event("cors_scan", "Running CORS misconfiguration scan")
+                    tasks["cors"] = asyncio.to_thread(
+                        self._run_cors, ctx.target_url, frozen,
+                    )
+                    report_svc.add_event("ddos_scan", "Running DDoS vulnerability scan")
+                    tasks["ddos"] = asyncio.to_thread(
+                        self._run_ddos, ctx.target_url, frozen,
+                    )
+                else:
+                    report_svc.add_event("live_scan", "Skipped (no live server)", success=False)
+                    report_svc.add_event("xss_scan", "Skipped (no live server)", success=False)
+                    report_svc.add_event("cors_scan", "Skipped (no live server)", success=False)
+                    report_svc.add_event("ddos_scan", "Skipped (no live server)", success=False)
+
+                # Static scan was already launched — include it
+                tasks["static"] = static_task
+
+                keys = list(tasks.keys())
+                results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+                return dict(zip(keys, results))
+
+            scan_results = run_sync(_crawl_and_scan())
+
+            # Process results
+            for kind, res in scan_results.items():
+                if isinstance(res, Exception):
+                    logger.warning("[ScanController] %s scan raised: %s", kind, res)
+                    report_svc.add_event(kind, f"Error: {res}", success=False)
+                    continue
+
+                if kind == "sqli":
+                    result = res
+                    if result["success"] and result["report"]:
+                        report_svc.set_live_scan_report(result["report"])
+                        report_svc.add_event(
+                            "live_scan",
+                            f"Scan complete — {result['endpoints_scanned']} endpoints, "
+                            f"{len(result.get('scan_log', []))} payloads sent",
+                        )
+                        logger.info("[ScanController] Step 5 OK — live scan done")
+                    else:
+                        report_svc.add_event("live_scan", f"Scan error: {result.get('error')}", success=False)
+                        logger.warning("[ScanController] Step 5 WARN — %s", result.get("error"))
+
+                elif kind == "xss":
+                    xss_result = res
+                    if xss_result["success"]:
+                        report_svc.set_xss_findings(xss_result["findings_dicts"])
+                        total_xss = xss_result["summary"]["total_xss_findings"]
+                        report_svc.add_event(
+                            "xss_scan",
+                            f"XSS scan complete — {total_xss} finding(s)",
+                        )
+                        logger.info("[ScanController] Step 5b OK — XSS scan done (%d findings)", total_xss)
+                    else:
+                        report_svc.add_event("xss_scan", f"XSS scan error: {xss_result.get('error')}", success=False)
+                        logger.warning("[ScanController] Step 5b WARN — %s", xss_result.get("error"))
+
+                elif kind == "static":
+                    static_result = res
+                    if static_result["success"]:
+                        report_svc.set_static_findings(static_result["findings"])
+                        report_svc.add_event(
+                            "static_scan",
+                            f"Found {len(static_result['findings'])} issues in "
+                            f"{static_result['files_scanned']} files",
+                        )
+                        logger.info("[ScanController] Step 6 OK — static scan done")
+                    else:
+                        report_svc.add_event("static_scan", f"Static error: {static_result['error']}", success=False)
+
+                elif kind == "cors":
+                    cors_result = res
+                    if cors_result["success"]:
+                        report_svc.set_cors_findings(cors_result["findings_dicts"])
+                        total_cors = cors_result["summary"]["total_cors_findings"]
+                        report_svc.add_event(
+                            "cors_scan",
+                            f"CORS scan complete — {total_cors} finding(s)",
+                        )
+                        logger.info("[ScanController] Step 5c OK — CORS scan done (%d findings)", total_cors)
+                    else:
+                        report_svc.add_event("cors_scan", f"CORS scan error: {cors_result.get('error')}", success=False)
+                        logger.warning("[ScanController] Step 5c WARN — %s", cors_result.get("error"))
+
+                elif kind == "ddos":
+                    ddos_result = res
+                    if ddos_result["success"]:
+                        report_svc.set_ddos_findings(ddos_result["findings_dicts"])
+                        total_ddos = ddos_result["summary"]["total_ddos_findings"]
+                        report_svc.add_event(
+                            "ddos_scan",
+                            f"DDoS scan complete — {total_ddos} finding(s)",
+                        )
+                        logger.info("[ScanController] Step 5d OK — DDoS scan done (%d findings)", total_ddos)
+                    else:
+                        report_svc.add_event("ddos_scan", f"DDoS scan error: {ddos_result.get('error')}", success=False)
+                        logger.warning("[ScanController] Step 5d WARN — %s", ddos_result.get("error"))
 
             # ── Step 7: Build & save report ───────────────────────────
             report_svc.add_event("report", "Building final report")
@@ -228,6 +333,44 @@ class ScanController:
             logger.info("[ScanController] Cleanup complete")
         except Exception as exc:
             logger.warning("[ScanController] Cleanup error: %s", exc)
+
+    # ── Thread-safe scan helpers (called by ThreadPoolExecutor) ───────
+
+    def _run_sqli(self, target_url, upload_dir, crawled_endpoints):
+        runner = AttackBotRunner(
+            target_url=target_url,
+            project_dir=upload_dir,
+            config=self._scan_config,
+        )
+        return runner.run(
+            crawled_endpoints=crawled_endpoints if crawled_endpoints else None,
+            probe_live=True,
+        )
+
+    @staticmethod
+    def _run_xss(target_url, upload_dir, crawled_endpoints):
+        xr = XSSRunner(target_url=target_url, project_dir=upload_dir)
+        return xr.run(
+            crawled_endpoints=crawled_endpoints if crawled_endpoints else None,
+        )
+
+    @staticmethod
+    def _run_static(upload_dir):
+        return StaticScanRunner(upload_dir).run()
+
+    @staticmethod
+    def _run_cors(target_url, crawled_endpoints):
+        cr = CORSRunner(target_url=target_url)
+        return cr.run(
+            crawled_endpoints=crawled_endpoints if crawled_endpoints else None,
+        )
+
+    @staticmethod
+    def _run_ddos(target_url, crawled_endpoints):
+        dr = DDoSRunner(target_url=target_url)
+        return dr.run(
+            crawled_endpoints=crawled_endpoints if crawled_endpoints else None,
+        )
 
     # ── Failure helper ────────────────────────────────────────────────
 

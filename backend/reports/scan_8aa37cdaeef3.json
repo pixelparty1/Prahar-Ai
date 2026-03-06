@@ -1,0 +1,121 @@
+{
+  "meta": {
+    "generated_at": "2026-03-06T10:36:10.890585+00:00",
+    "upload_id": "8aa37cdaeef3",
+    "target_url": "",
+    "generator": "Prahaar_AI ReportService v1.0"
+  },
+  "scan_summary": {
+    "overall_risk_level": "SAFE",
+    "total_vulnerabilities": 0,
+    "total_xss_vulnerabilities": 0,
+    "total_static_findings": 0,
+    "total_endpoints_crawled": 0
+  },
+  "vulnerabilities": [],
+  "xss_vulnerabilities": [],
+  "static_analysis_findings": [],
+  "crawled_endpoints": [],
+  "live_scan_status": {
+    "success": false,
+    "target_url": "",
+    "error": "Node server failed to start after all strategies. The project may require environment variables or a database.",
+    "logs": [
+      "    \u001b[32m\u001b[1mVITE\u001b[22m v5.4.19\u001b[39m  \u001b[2mready in \u001b[0m\u001b[1m297\u001b[22m\u001b[2m\u001b[0m ms\u001b[22m",
+      "    \u001b[32m\u279c\u001b[39m  \u001b[1mLocal\u001b[22m:   \u001b[36mhttp://localhost:\u001b[1m8080\u001b[22m/\u001b[39m",
+      "    \u001b[32m\u279c\u001b[39m  \u001b[1mNetwork\u001b[22m: \u001b[36mhttp://10.148.9.71:\u001b[1m8080\u001b[22m/\u001b[39m",
+      "  \u001b[2m\u001b[32m  \u279c\u001b[39m\u001b[22m\u001b[2m  press \u001b[22m\u001b[1mh + enter\u001b[22m\u001b[2m to show help\u001b[22m",
+      "[node] Strategy 1 failed after 60.0s: npm run dev (Express)",
+      "[node] Strategy 2/2: node server.js (Express entry)",
+      "[node] Launched PID 14204 \u2014 node server.js (Express entry)",
+      "[node] Strategy 2 log tail:",
+      "  file:///C:/Users/Manan/AppData/Local/Temp/prahaar_sandbox/sandbox_764ea1c64109/server.js:1",
+      "  const express = require('express');",
+      "                  ^",
+      "  ReferenceError: require is not defined in ES module scope, you can use import instead",
+      "  This file is being treated as an ES module because it has a '.js' file extension and 'C:\\Users\\Manan\\AppData\\Local\\Temp\\prahaar_sandbox\\sandbox_764ea1c64109\\package.json' contains \"type\": \"module\". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.",
+      "      at file:///C:/Users/Manan/AppData/Local/Temp/prahaar_sandbox/sandbox_764ea1c64109/server.js:1:17",
+      "      at ModuleJob.run (node:internal/modules/esm/module_job:274:25)",
+      "      at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)",
+      "      at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)",
+      "  Node.js v22.16.0",
+      "[node] Strategy 2 failed after 60.0s: node server.js (Express entry)",
+      "[node] All startup strategies exhausted."
+    ],
+    "fallback": "Static code analysis performed instead."
+  },
+  "pipeline_events": [
+    {
+      "timestamp": "2026-03-06T10:34:44.839384+00:00",
+      "stage": "upload",
+      "message": "Extracting CarbonIQLive-main.zip",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:34:45.031511+00:00",
+      "stage": "upload",
+      "message": "Extracted to C:\\Users\\Manan\\AppData\\Local\\Temp\\uploads\\project_8aa37cdaeef3\\CarbonIQLive-main",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:34:45.031904+00:00",
+      "stage": "detect",
+      "message": "Detecting framework",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:34:45.038703+00:00",
+      "stage": "detect",
+      "message": "Detected: node",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:34:45.038964+00:00",
+      "stage": "sandbox",
+      "message": "Launching sandbox server",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.877687+00:00",
+      "stage": "sandbox",
+      "message": "Sandbox failed: Node server failed to start after all strategies. The project may require environment variables or a database.",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.878183+00:00",
+      "stage": "crawl",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.878190+00:00",
+      "stage": "live_scan",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.878192+00:00",
+      "stage": "xss_scan",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.878195+00:00",
+      "stage": "static_scan",
+      "message": "Running static code analysis",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.890496+00:00",
+      "stage": "static_scan",
+      "message": "Found 0 issues in 102 files",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T10:36:10.890575+00:00",
+      "stage": "report",
+      "message": "Building final report",
+      "success": true
+    }
+  ]
+}
