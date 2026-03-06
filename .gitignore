@@ -12,8 +12,14 @@ build/
 # Virtual environments
 .venv/
 venv/
+venve/
 ENV/
 env/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # SQLite databases
 *.db

@@ -44,6 +44,10 @@ from report_service import ReportService
 from cleanup_manager import CleanupManager
 from AttackBot.SQL_Injections.sql_injection_scanner import ScanConfig
 from async_engine import run_sync
+from DefendBot.sql_defense_bot import SQLDefenseBot
+from DefendBot.cors_defense_bot import CORSDefenseBot
+from DefendBot.xss_defense_bot import XSSDefenseBot
+from DefendBot.ddos_defense_bot import DDoSDefenseBot
 
 logger = logging.getLogger(__name__)
 
@@ -222,6 +226,28 @@ class ScanController:
                             f"{len(result.get('scan_log', []))} payloads sent",
                         )
                         logger.info("[ScanController] Step 5 OK — live scan done")
+
+                        # Run DefendBot on the scan log
+                        scan_log = result.get("scan_log", [])
+                        if scan_log:
+                            try:
+                                defend_bot = SQLDefenseBot(target_url=ctx.target_url or "")
+                                defend_bot.analyze_scan_log(scan_log)
+                                report_svc.set_defense_results(defend_bot.get_results())
+                                defense_summary = defend_bot.get_summary()
+                                report_svc.add_event(
+                                    "defense_sim",
+                                    f"Defense simulation complete — {defense_summary.get('attacks_blocked', 0)} blocked, "
+                                    f"{defense_summary.get('defense_rate', 0)}% defense rate",
+                                )
+                                logger.info(
+                                    "[ScanController] DefendBot OK — %d analyzed, %d blocked",
+                                    defense_summary.get("total_attacks_analyzed", 0),
+                                    defense_summary.get("attacks_blocked", 0),
+                                )
+                            except Exception as exc:
+                                logger.warning("[ScanController] DefendBot error: %s", exc)
+                                report_svc.add_event("defense_sim", f"Defense error: {exc}", success=False)
                     else:
                         report_svc.add_event("live_scan", f"Scan error: {result.get('error')}", success=False)
                         logger.warning("[ScanController] Step 5 WARN — %s", result.get("error"))
@@ -236,6 +262,28 @@ class ScanController:
                             f"XSS scan complete — {total_xss} finding(s)",
                         )
                         logger.info("[ScanController] Step 5b OK — XSS scan done (%d findings)", total_xss)
+
+                        # Run XSS DefendBot on the findings
+                        xss_findings_dicts = xss_result.get("findings_dicts", [])
+                        if xss_findings_dicts:
+                            try:
+                                xss_defend = XSSDefenseBot(target_url=ctx.target_url or "")
+                                xss_defend.analyze_findings(xss_findings_dicts)
+                                report_svc.set_xss_defense_results(xss_defend.get_results())
+                                xds = xss_defend.get_summary()
+                                report_svc.add_event(
+                                    "xss_defense_sim",
+                                    f"XSS defense simulation complete — {xds.get('total_mitigated', 0)} mitigated, "
+                                    f"{xds.get('defense_rate', 0)}% defense rate",
+                                )
+                                logger.info(
+                                    "[ScanController] XSS DefendBot OK — %d evaluated, %d mitigated",
+                                    xds.get("total_evaluated", 0),
+                                    xds.get("total_mitigated", 0),
+                                )
+                            except Exception as exc:
+                                logger.warning("[ScanController] XSS DefendBot error: %s", exc)
+                                report_svc.add_event("xss_defense_sim", f"XSS defense error: {exc}", success=False)
                     else:
                         report_svc.add_event("xss_scan", f"XSS scan error: {xss_result.get('error')}", success=False)
                         logger.warning("[ScanController] Step 5b WARN — %s", xss_result.get("error"))
@@ -263,6 +311,28 @@ class ScanController:
                             f"CORS scan complete — {total_cors} finding(s)",
                         )
                         logger.info("[ScanController] Step 5c OK — CORS scan done (%d findings)", total_cors)
+
+                        # Run CORS DefendBot on the findings
+                        cors_findings_dicts = cors_result.get("findings_dicts", [])
+                        if cors_findings_dicts:
+                            try:
+                                cors_defend = CORSDefenseBot(target_url=ctx.target_url or "")
+                                cors_defend.analyze_findings(cors_findings_dicts)
+                                report_svc.set_cors_defense_results(cors_defend.get_results())
+                                cors_ds = cors_defend.get_summary()
+                                report_svc.add_event(
+                                    "cors_defense_sim",
+                                    f"CORS defense simulation complete — {cors_ds.get('attacks_mitigated', 0)} mitigated, "
+                                    f"{cors_ds.get('defense_rate', 0)}% defense rate",
+                                )
+                                logger.info(
+                                    "[ScanController] CORS DefendBot OK — %d analyzed, %d mitigated",
+                                    cors_ds.get("total_attacks_analyzed", 0),
+                                    cors_ds.get("attacks_mitigated", 0),
+                                )
+                            except Exception as exc:
+                                logger.warning("[ScanController] CORS DefendBot error: %s", exc)
+                                report_svc.add_event("cors_defense_sim", f"CORS defense error: {exc}", success=False)
                     else:
                         report_svc.add_event("cors_scan", f"CORS scan error: {cors_result.get('error')}", success=False)
                         logger.warning("[ScanController] Step 5c WARN — %s", cors_result.get("error"))
@@ -277,6 +347,28 @@ class ScanController:
                             f"DDoS scan complete — {total_ddos} finding(s)",
                         )
                         logger.info("[ScanController] Step 5d OK — DDoS scan done (%d findings)", total_ddos)
+
+                        # Run DDoS DefendBot on the findings
+                        ddos_findings_dicts = ddos_result.get("findings_dicts", [])
+                        if ddos_findings_dicts:
+                            try:
+                                ddos_defend = DDoSDefenseBot(target_url=ctx.target_url or "")
+                                ddos_defend.analyze_findings(ddos_findings_dicts)
+                                report_svc.set_ddos_defense_results(ddos_defend.get_results())
+                                dds = ddos_defend.get_summary()
+                                report_svc.add_event(
+                                    "ddos_defense_sim",
+                                    f"DDoS defense simulation complete — {dds.get('total_mitigated', 0)} mitigated, "
+                                    f"{dds.get('defense_rate', 0)}% defense rate",
+                                )
+                                logger.info(
+                                    "[ScanController] DDoS DefendBot OK — %d evaluated, %d mitigated",
+                                    dds.get("total_evaluated", 0),
+                                    dds.get("total_mitigated", 0),
+                                )
+                            except Exception as exc:
+                                logger.warning("[ScanController] DDoS DefendBot error: %s", exc)
+                                report_svc.add_event("ddos_defense_sim", f"DDoS defense error: {exc}", success=False)
                     else:
                         report_svc.add_event("ddos_scan", f"DDoS scan error: {ddos_result.get('error')}", success=False)
                         logger.warning("[ScanController] Step 5d WARN — %s", ddos_result.get("error"))

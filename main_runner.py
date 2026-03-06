@@ -49,8 +49,9 @@ def _prompt_non_empty(prompt: str) -> str:
 def _prompt_choice() -> str:
     print("Select scan type:")
     print("1 - Scan ZIP project")
-    print("2 - Scan live website URL")
-    print("3 - Scan local project folder")
+    print("2 - Scan live website URL (attack only)")
+    print("3 - Scan live website URL (attack + defense)")
+    print("4 - Scan local project folder")
     print("q - Quit")
     return input("> ").strip().lower()
 
@@ -221,6 +222,24 @@ def _run_live_url_pipeline(target_url: str, report_dir: str) -> int:
                 "live_scan",
                 f"SQL scan complete — {runner_result.get('endpoints_scanned', 0)} endpoints scanned",
             )
+
+            # Run DefendBot on the scan log
+            scan_log = runner_result.get("scan_log", [])
+            if scan_log:
+                try:
+                    from DefendBot.sql_defense_bot import SQLDefenseBot
+
+                    defend_bot = SQLDefenseBot(target_url=target_url)
+                    defend_bot.analyze_scan_log(scan_log)
+                    svc.set_defense_results(defend_bot.get_results())
+                    ds = defend_bot.get_summary()
+                    svc.add_event(
+                        "defense_sim",
+                        f"Defense simulation complete — {ds.get('attacks_blocked', 0)} blocked, "
+                        f"{ds.get('defense_rate', 0)}% defense rate",
+                    )
+                except Exception as exc:
+                    svc.add_event("defense_sim", f"Defense error: {exc}", success=False)
         else:
             err = runner_result.get("error") or "Unknown SQL scan error"
             print(f"SQL injection scan error: {err}")
@@ -237,6 +256,24 @@ def _run_live_url_pipeline(target_url: str, report_dir: str) -> int:
             svc.set_xss_findings(xss_result.get("findings_dicts") or [])
             total_xss = (xss_result.get("summary") or {}).get("total_xss_findings", 0)
             svc.add_event("xss_scan", f"XSS scan complete — {total_xss} finding(s)")
+
+            # Run XSS DefendBot on the findings
+            xss_findings_dicts = xss_result.get("findings_dicts") or []
+            if xss_findings_dicts:
+                try:
+                    from DefendBot.xss_defense_bot import XSSDefenseBot
+
+                    xss_defend = XSSDefenseBot(target_url=target_url)
+                    xss_defend.analyze_findings(xss_findings_dicts)
+                    svc.set_xss_defense_results(xss_defend.get_results())
+                    xds = xss_defend.get_summary()
+                    svc.add_event(
+                        "xss_defense_sim",
+                        f"XSS defense simulation complete — {xds.get('total_mitigated', 0)} mitigated, "
+                        f"{xds.get('defense_rate', 0)}% defense rate",
+                    )
+                except Exception as exc:
+                    svc.add_event("xss_defense_sim", f"XSS defense error: {exc}", success=False)
         else:
             err = xss_result.get("error") or "Unknown XSS scan error"
             print(f"XSS scan error: {err}")
@@ -253,6 +290,24 @@ def _run_live_url_pipeline(target_url: str, report_dir: str) -> int:
             svc.set_cors_findings(cors_result.get("findings_dicts") or [])
             total_cors = (cors_result.get("summary") or {}).get("total_cors_findings", 0)
             svc.add_event("cors_scan", f"CORS scan complete — {total_cors} finding(s)")
+
+            # Run CORS DefendBot on the findings
+            cors_findings_dicts = cors_result.get("findings_dicts") or []
+            if cors_findings_dicts:
+                try:
+                    from DefendBot.cors_defense_bot import CORSDefenseBot
+
+                    cors_defend = CORSDefenseBot(target_url=target_url)
+                    cors_defend.analyze_findings(cors_findings_dicts)
+                    svc.set_cors_defense_results(cors_defend.get_results())
+                    cds = cors_defend.get_summary()
+                    svc.add_event(
+                        "cors_defense_sim",
+                        f"CORS defense simulation complete — {cds.get('attacks_mitigated', 0)} mitigated, "
+                        f"{cds.get('defense_rate', 0)}% defense rate",
+                    )
+                except Exception as exc:
+                    svc.add_event("cors_defense_sim", f"CORS defense error: {exc}", success=False)
         else:
             err = cors_result.get("error") or "Unknown CORS scan error"
             print(f"CORS scan error: {err}")
@@ -269,6 +324,24 @@ def _run_live_url_pipeline(target_url: str, report_dir: str) -> int:
             svc.set_ddos_findings(ddos_result.get("findings_dicts") or [])
             total_ddos = (ddos_result.get("summary") or {}).get("total_ddos_findings", 0)
             svc.add_event("ddos_scan", f"DDoS scan complete — {total_ddos} finding(s)")
+
+            # Run DDoS DefendBot on the findings
+            ddos_findings_dicts = ddos_result.get("findings_dicts") or []
+            if ddos_findings_dicts:
+                try:
+                    from DefendBot.ddos_defense_bot import DDoSDefenseBot
+
+                    ddos_defend = DDoSDefenseBot(target_url=target_url)
+                    ddos_defend.analyze_findings(ddos_findings_dicts)
+                    svc.set_ddos_defense_results(ddos_defend.get_results())
+                    dds = ddos_defend.get_summary()
+                    svc.add_event(
+                        "ddos_defense_sim",
+                        f"DDoS defense simulation complete — {dds.get('total_mitigated', 0)} mitigated, "
+                        f"{dds.get('defense_rate', 0)}% defense rate",
+                    )
+                except Exception as exc:
+                    svc.add_event("ddos_defense_sim", f"DDoS defense error: {exc}", success=False)
         else:
             err = ddos_result.get("error") or "Unknown DDoS scan error"
             print(f"DDoS scan error: {err}")
@@ -280,6 +353,95 @@ def _run_live_url_pipeline(target_url: str, report_dir: str) -> int:
     # Step 4: Build & save report
     print("[3/4] Static analysis skipped (no project source).")
     print("[4/4] Generating vulnerability report...")
+    report = svc.build()
+
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    report_path = os.path.join(report_dir, f"scan_live_{ts}.json")
+    svc.save_json(report_path)
+
+    summary = report.get("scan_summary") or {}
+    total = (
+        int(summary.get("total_vulnerabilities", 0))
+        + int(summary.get("total_xss_vulnerabilities", 0))
+        + int(summary.get("total_cors_misconfigurations", 0))
+        + int(summary.get("total_ddos_vulnerabilities", 0))
+    )
+
+    print("\nScan completed.")
+    print("Report saved at:")
+    print(report_path)
+    print(f"Total vulnerabilities detected: {total}")
+
+    defense = (report.get("defense_simulation") or {}).get("summary", {})
+    if defense:
+        print(f"SQLi defense: {defense.get('attacks_blocked', 0)} blocked / "
+              f"{defense.get('total_attacks_analyzed', 0)} analyzed "
+              f"({defense.get('defense_rate', 'N/A')}% defense rate)")
+
+    cors_defense = (report.get("cors_defense_simulation") or {}).get("summary", {})
+    if cors_defense:
+        print(f"CORS defense: {cors_defense.get('attacks_mitigated', 0)} mitigated / "
+              f"{cors_defense.get('total_attacks_analyzed', 0)} analyzed "
+              f"({cors_defense.get('defense_rate', 'N/A')}% defense rate)")
+
+    xss_defense = (report.get("xss_defense_simulation") or {}).get("summary", {})
+    if xss_defense:
+        print(f"XSS defense: {xss_defense.get('total_mitigated', 0)} mitigated / "
+              f"{xss_defense.get('total_evaluated', 0)} evaluated "
+              f"({xss_defense.get('defense_rate', 'N/A')}% defense rate)")
+
+    ddos_defense = (report.get("ddos_defense_simulation") or {}).get("summary", {})
+    if ddos_defense:
+        print(f"DDoS defense: {ddos_defense.get('total_mitigated', 0)} mitigated / "
+              f"{ddos_defense.get('total_evaluated', 0)} evaluated "
+              f"({ddos_defense.get('defense_rate', 'N/A')}% defense rate)")
+
+    return 0
+
+
+def _run_orchestrated_pipeline(target_url: str, report_dir: str) -> int:
+    """Run attack + defense battle simulation via the orchestrator."""
+    from crawler import Crawler
+    from report_service import ReportService
+    from orchestrator import AttackDefenseOrchestrator
+
+    target_url = target_url.strip().rstrip("/")
+
+    svc = ReportService(target_url=target_url)
+    svc.add_event("start", f"Starting orchestrated scan: {target_url}")
+
+    print("[1/3] Crawling target for endpoints...")
+    crawled_endpoints = []
+    try:
+        svc.add_event("crawl", f"Crawling {target_url}")
+        crawler_obj = Crawler(target_url, max_pages=50, timeout=5.0)
+        crawled_endpoints = crawler_obj.crawl()
+        svc.set_crawled_endpoints(crawler_obj.get_endpoints_as_dicts())
+        svc.add_event("crawl", f"Found {len(crawled_endpoints)} endpoints")
+    except Exception as exc:
+        msg = f"Crawl failed: {exc}"
+        print(msg)
+        svc.add_event("crawl", msg, success=False)
+
+    print("[2/3] Running attack + defense battle simulation...")
+    orch = AttackDefenseOrchestrator(target_url=target_url, verbose=True)
+
+    # Attach NarratorBot as a read-only observer on the event bus
+    from NarratorBot import NarratorBot
+    narrator = NarratorBot(verbose=True)
+    narrator.attach(orch.event_bus)
+
+    result = orch.run(crawled_endpoints=crawled_endpoints, report_svc=svc)
+
+    # Print narrator's final summary
+    narrator.print_final_summary(
+        defense_results=result.get("defense_results", {}),
+        battle_logs=result.get("battle_logs", {}),
+    )
+
+    svc.add_event("static_scan", "Skipped (no project source for static analysis)", success=False)
+
+    print("[3/3] Generating vulnerability report...")
     report = svc.build()
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -327,6 +489,10 @@ def main() -> int:
             return _run_live_url_pipeline(url, report_dir)
 
         if choice == "3":
+            url = _prompt_non_empty("Enter target website URL: ")
+            return _run_orchestrated_pipeline(url, report_dir)
+
+        if choice == "4":
             folder = _prompt_non_empty("Enter project folder path: ")
             folder = os.path.abspath(folder)
             if not os.path.isdir(folder):
@@ -345,7 +511,7 @@ def main() -> int:
                     except Exception:
                         pass
 
-        print("Invalid choice. Please select 1, 2, 3, or q.")
+        print("Invalid choice. Please select 1, 2, 3, 4, or q.")
         return 1
 
     except KeyboardInterrupt:

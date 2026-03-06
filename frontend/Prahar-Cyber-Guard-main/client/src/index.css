@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600&family=Oxanium:wght@400;600;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: 'Outfit', sans-serif;
+    --font-display: 'Oxanium', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --theme-name: "Midnight Command";
+    --theme-primary: #00CCFF;
+    --theme-secondary: #0066FF;
+    --theme-accent: #00FF88;
+    --theme-background: #0A0E27;
+    --theme-surface: #151B3B;
+    --theme-text-primary: #E0E0E0;
+    --theme-text-secondary: #9CA3AF;
+    --theme-border: rgba(0, 204, 255, 0.3);
+    --theme-danger: #FF3333;
+    --robot-primary: #00CCFF;
+    --robot-secondary: #0066FF;
+    --robot-accent: #00FF88;
+
+    /* Dark Mode Cybersecurity Palette */
+    --background: 226 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 226 47% 6%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 226 47% 6%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Electric Cyan for primary brand */
+    --primary: 184 100% 50%;
+    --primary-foreground: 226 47% 4%;
+
+    /* Deep Blue/Purple for secondary */
+    --secondary: 226 70% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 226 30% 12%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 280 100% 60%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 226 30% 18%;
+    --input: 226 30% 12%;
+    --ring: 184 100% 50%;
+
+    --radius: 0.5rem;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px hsl(var(--primary) / 0.5), 0 0 40px hsl(var(--primary) / 0.2);
+  }
+
+  .cyber-grid {
+    background-size: 50px 50px;
+    background-image: 
+      linear-gradient(to right, hsl(var(--primary) / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary) / 0.07) 1px, transparent 1px);
+    mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 20%, transparent 80%);
+  }
+
+  .cyber-dots {
+    background-image: radial-gradient(hsl(var(--primary) / 0.15) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, black 30%, transparent 70%);
+  }
+
+  .glass-panel {
+    @apply bg-background/40 backdrop-blur-md border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+  }
+}
+
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 120;
+  opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0);
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    hsl(var(--primary) / 0.36) 0%,
+    hsl(var(--primary) / 0.2) 38%,
+    hsl(var(--primary) / 0.08) 58%,
+    transparent 75%
+  );
+  filter: blur(12px);
+  mix-blend-mode: screen;
+  transition: opacity 0.2s ease;
+}
+
+.cursor-glow--pressed {
+  transform: scale(0.82);
+}
+
+/* Custom Scanline Animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Star glow/dim animation */
+@keyframes star-pulse {
+  0% { opacity: 0.08; transform: scale(0.7); filter: blur(0.5px); }
+  50% { opacity: 0.9; transform: scale(1.3); filter: blur(0px); }
+  100% { opacity: 0.08; transform: scale(0.7); filter: blur(0.5px); }
+}
+
+.scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to bottom, transparent, hsl(var(--primary) / 0.5), transparent);
+  opacity: 0.3;
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .navigation-bar {
+    padding: 0.75rem 1rem;
+  }
+
+  .navigation-bar .logo {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  .navigation-bar .page-title {
+    display: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursor-glow {
+    display: none;
+  }
+}

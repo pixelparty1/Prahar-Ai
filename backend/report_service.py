@@ -46,6 +46,10 @@ class ReportService:
         self._xss_findings: List[Dict] = []
         self._cors_findings: List[Dict] = []
         self._ddos_findings: List[Dict] = []
+        self._defense_results: Optional[Dict] = None
+        self._cors_defense_results: Optional[Dict] = None
+        self._xss_defense_results: Optional[Dict] = None
+        self._ddos_defense_results: Optional[Dict] = None
         self._crawled_endpoints: List[Dict] = []
         self._pipeline_events: List[Dict] = []
         self._sandbox_status: Dict = {}
@@ -85,6 +89,22 @@ class ReportService:
     def set_ddos_findings(self, findings: List[Dict]) -> None:
         """Accept DDoS vulnerability findings produced by DDoSRunner."""
         self._ddos_findings = findings or []
+
+    def set_defense_results(self, results: Dict) -> None:
+        """Accept SQL defense simulation results from SQLDefenseBot."""
+        self._defense_results = results or None
+
+    def set_cors_defense_results(self, results: Dict) -> None:
+        """Accept CORS defense simulation results from CORSDefenseBot."""
+        self._cors_defense_results = results or None
+
+    def set_xss_defense_results(self, results: Dict) -> None:
+        """Accept XSS defense simulation results from XSSDefenseBot."""
+        self._xss_defense_results = results or None
+
+    def set_ddos_defense_results(self, results: Dict) -> None:
+        """Accept DDoS defense simulation results from DDoSDefenseBot."""
+        self._ddos_defense_results = results or None
 
     def set_sandbox_status(
         self,
@@ -195,6 +215,31 @@ class ReportService:
 
         ddos_count   = len(deduped_ddos)
 
+        # Defense simulation results
+        defense_summary = {}
+        defense_verdicts = []
+        if self._defense_results:
+            defense_summary = self._defense_results.get("summary", {})
+            defense_verdicts = self._defense_results.get("verdicts", [])
+
+        cors_defense_summary = {}
+        cors_defense_verdicts = []
+        if self._cors_defense_results:
+            cors_defense_summary = self._cors_defense_results.get("summary", {})
+            cors_defense_verdicts = self._cors_defense_results.get("verdicts", [])
+
+        xss_defense_summary = {}
+        xss_defense_verdicts = []
+        if self._xss_defense_results:
+            xss_defense_summary = self._xss_defense_results.get("summary", {})
+            xss_defense_verdicts = self._xss_defense_results.get("verdicts", [])
+
+        ddos_defense_summary = {}
+        ddos_defense_verdicts = []
+        if self._ddos_defense_results:
+            ddos_defense_summary = self._ddos_defense_results.get("summary", {})
+            ddos_defense_verdicts = self._ddos_defense_results.get("verdicts", [])
+
         # Escalate overall risk based on XSS, CORS, and DDoS findings
         order = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
         for findings_list in (deduped_xss, deduped_cors, deduped_ddos):
@@ -221,11 +266,31 @@ class ReportService:
                 "total_ddos_vulnerabilities": ddos_count,
                 "total_static_findings": static_count,
                 "total_endpoints_crawled": len(self._crawled_endpoints),
+                "defense_rate": defense_summary.get("defense_rate", "N/A"),
+                "cors_defense_rate": cors_defense_summary.get("defense_rate", "N/A"),
+                "xss_defense_rate": xss_defense_summary.get("defense_rate", "N/A"),
+                "ddos_defense_rate": ddos_defense_summary.get("defense_rate", "N/A"),
             },
             "vulnerabilities": vulnerabilities,
             "xss_vulnerabilities": deduped_xss,
             "cors_vulnerabilities": deduped_cors,
             "ddos_vulnerabilities": deduped_ddos,
+            "defense_simulation": {
+                "summary": defense_summary,
+                "verdicts": defense_verdicts,
+            },
+            "cors_defense_simulation": {
+                "summary": cors_defense_summary,
+                "verdicts": cors_defense_verdicts,
+            },
+            "xss_defense_simulation": {
+                "summary": xss_defense_summary,
+                "verdicts": xss_defense_verdicts,
+            },
+            "ddos_defense_simulation": {
+                "summary": ddos_defense_summary,
+                "verdicts": ddos_defense_verdicts,
+            },
             "static_analysis_findings": deduped_static,
             "crawled_endpoints": self._crawled_endpoints,
             "live_scan_status": self._sandbox_status,
@@ -233,12 +298,16 @@ class ReportService:
         }
 
         logger.info(
-            "[ReportService] Report built — %d SQL vulns, %d XSS findings, %d CORS findings, %d DDoS findings, %d static, risk=%s",
+            "[ReportService] Report built — %d SQL vulns, %d XSS findings, %d CORS findings, %d DDoS findings, %d static, defense_rate=%s, cors_defense_rate=%s, xss_defense_rate=%s, ddos_defense_rate=%s, risk=%s",
             vuln_count,
             xss_count,
             cors_count,
             ddos_count,
             static_count,
+            defense_summary.get("defense_rate", "N/A"),
+            cors_defense_summary.get("defense_rate", "N/A"),
+            xss_defense_summary.get("defense_rate", "N/A"),
+            ddos_defense_summary.get("defense_rate", "N/A"),
             overall_risk,
         )
         return self._built
@@ -282,6 +351,10 @@ class ReportService:
             f"  XSS vulnerabilities     : {s.get('total_xss_vulnerabilities', 0)}",
             f"  CORS misconfigurations  : {s.get('total_cors_misconfigurations', 0)}",
             f"  DDoS vulnerabilities    : {s.get('total_ddos_vulnerabilities', 0)}",
+            f"  SQLi defense rate       : {s.get('defense_rate', 'N/A')}",
+            f"  CORS defense rate       : {s.get('cors_defense_rate', 'N/A')}",
+            f"  XSS defense rate        : {s.get('xss_defense_rate', 'N/A')}",
+            f"  DDoS defense rate       : {s.get('ddos_defense_rate', 'N/A')}",
             f"  Static-analysis issues  : {s.get('total_static_findings', 0)}",
             f"  Endpoints crawled       : {s.get('total_endpoints_crawled', 0)}",
             f"  Payloads tested         : {s.get('total_payloads_tested', 0)}",
@@ -348,6 +421,120 @@ class ReportService:
                 )
                 if v.get('observation'):
                     lines.append(f"       {v['observation'][:120]}")
+            lines.append("─" * 60)
+
+        defense = d.get("defense_simulation", {})
+        defense_sum = defense.get("summary", {})
+        if defense_sum:
+            lines.append("  SQL INJECTION DEFENSE SIMULATION:")
+            lines.append(
+                f"    Attacks analyzed : {defense_sum.get('total_attacks_analyzed', 0)}"
+            )
+            lines.append(
+                f"    Attacks blocked  : {defense_sum.get('attacks_blocked', 0)}"
+            )
+            lines.append(
+                f"    Attacks mitigated: {defense_sum.get('attacks_mitigated', 0)}"
+            )
+            lines.append(
+                f"    Rate limited     : {defense_sum.get('attacks_rate_limited', 0)}"
+            )
+            lines.append(
+                f"    Attacks allowed  : {defense_sum.get('attacks_allowed', 0)}"
+            )
+            lines.append(
+                f"    Defense rate     : {defense_sum.get('defense_rate', 'N/A')}%"
+            )
+            by_tech = defense_sum.get("by_technique", {})
+            if by_tech:
+                lines.append("    By technique:")
+                for tech, count in by_tech.items():
+                    lines.append(f"      {tech}: {count}")
+            lines.append("─" * 60)
+
+        cors_defense = d.get("cors_defense_simulation", {})
+        cors_defense_sum = cors_defense.get("summary", {})
+        if cors_defense_sum:
+            lines.append("  CORS DEFENSE SIMULATION:")
+            lines.append(
+                f"    Attacks analyzed : {cors_defense_sum.get('total_attacks_analyzed', 0)}"
+            )
+            lines.append(
+                f"    Attacks blocked  : {cors_defense_sum.get('attacks_blocked', 0)}"
+            )
+            lines.append(
+                f"    Attacks hardened : {cors_defense_sum.get('attacks_hardened', 0)}"
+            )
+            lines.append(
+                f"    Attacks enforced : {cors_defense_sum.get('attacks_enforced', 0)}"
+            )
+            lines.append(
+                f"    Attacks allowed  : {cors_defense_sum.get('attacks_allowed', 0)}"
+            )
+            lines.append(
+                f"    Defense rate     : {cors_defense_sum.get('defense_rate', 'N/A')}%"
+            )
+            by_tech = cors_defense_sum.get("by_technique", {})
+            if by_tech:
+                lines.append("    By technique:")
+                for tech, count in by_tech.items():
+                    lines.append(f"      {tech}: {count}")
+            lines.append("─" * 60)
+
+        xss_defense = d.get("xss_defense_simulation", {})
+        xss_defense_sum = xss_defense.get("summary", {})
+        if xss_defense_sum:
+            lines.append("  XSS DEFENSE SIMULATION:")
+            lines.append(
+                f"    Attacks evaluated: {xss_defense_sum.get('total_evaluated', 0)}"
+            )
+            lines.append(
+                f"    Attacks mitigated: {xss_defense_sum.get('total_mitigated', 0)}"
+            )
+            lines.append(
+                f"    Attacks allowed  : {xss_defense_sum.get('total_allowed', 0)}"
+            )
+            lines.append(
+                f"    Defense rate     : {xss_defense_sum.get('defense_rate', 'N/A')}%"
+            )
+            by_tech = xss_defense_sum.get("by_technique", {})
+            if by_tech:
+                lines.append("    By technique:")
+                for tech, count in by_tech.items():
+                    lines.append(f"      {tech}: {count}")
+            by_action = xss_defense_sum.get("by_action", {})
+            if by_action:
+                lines.append("    By action:")
+                for act, count in by_action.items():
+                    lines.append(f"      {act}: {count}")
+            lines.append("─" * 60)
+
+        ddos_defense = d.get("ddos_defense_simulation", {})
+        ddos_defense_sum = ddos_defense.get("summary", {})
+        if ddos_defense_sum:
+            lines.append("  DDOS DEFENSE SIMULATION:")
+            lines.append(
+                f"    Attacks evaluated: {ddos_defense_sum.get('total_evaluated', 0)}"
+            )
+            lines.append(
+                f"    Attacks mitigated: {ddos_defense_sum.get('total_mitigated', 0)}"
+            )
+            lines.append(
+                f"    Attacks allowed  : {ddos_defense_sum.get('total_allowed', 0)}"
+            )
+            lines.append(
+                f"    Defense rate     : {ddos_defense_sum.get('defense_rate', 'N/A')}%"
+            )
+            by_tech = ddos_defense_sum.get("by_technique", {})
+            if by_tech:
+                lines.append("    By technique:")
+                for tech, count in by_tech.items():
+                    lines.append(f"      {tech}: {count}")
+            by_action = ddos_defense_sum.get("by_action", {})
+            if by_action:
+                lines.append("    By action:")
+                for act, count in by_action.items():
+                    lines.append(f"      {act}: {count}")
             lines.append("─" * 60)
 
         static = d.get("static_analysis_findings", [])
