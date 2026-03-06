@@ -94,7 +94,7 @@ export default function PricingPage() {
 
   const handlePlanSelect = (plan: Plan) => {
     localStorage.setItem("prahaar_plan", plan.tier);
-    navigate("/command-center");
+    navigate("/transaction");
   };
 
   return (

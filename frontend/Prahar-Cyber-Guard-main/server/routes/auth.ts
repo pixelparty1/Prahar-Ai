@@ -86,10 +86,84 @@ router.post("/login", async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({ id: user.$id, firstName: user.firstName, message: "Login successful." });
+    res.status(200).json({ id: user.$id, firstName: user.firstName, plans: user.plans || "free", message: "Login successful." });
   } catch (err: any) {
     console.error("[auth] login error:", err?.message || err);
     res.status(500).json({ error: err?.message || "Login failed." });
+  }
+});
+
+/**
+ * POST /api/auth/update-plan
+ * Body: { userId, selectedPlan }
+ * Updates the plans column for the given user.
+ */
+router.post("/update-plan", async (req: Request, res: Response) => {
+  const { userId, selectedPlan } = req.body as {
+    userId?: string;
+    selectedPlan?: string;
+  };
+
+  const validPlans = ["free", "starter", "pro", "enterprise"];
+
+  if (!userId || !selectedPlan) {
+    res.status(400).json({ error: "userId and selectedPlan are required." });
+    return;
+  }
+
+  if (!validPlans.includes(selectedPlan)) {
+    res.status(400).json({ error: "Invalid plan. Must be one of: free, starter, pro, enterprise." });
+    return;
+  }
+
+  try {
+    const client = getServerClient();
+    const databases = new Databases(client);
+
+    const databaseId = process.env.APPWRITE_DATABASE_ID || "Users";
+    const collectionId = process.env.APPWRITE_COLLECTION_ID || "users";
+
+    await databases.updateDocument(databaseId, collectionId, userId, {
+      plans: selectedPlan,
+    });
+
+    res.status(200).json({ success: true, plan: selectedPlan, message: "Plan updated successfully." });
+  } catch (err: any) {
+    console.error("[auth] update-plan error:", err?.message || err);
+    res.status(500).json({ error: err?.message || "Failed to update plan." });
+  }
+});
+
+/**
+ * GET /api/auth/user/:id
+ * Returns the user profile including plan info.
+ */
+router.get("/user/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    res.status(400).json({ error: "User ID is required." });
+    return;
+  }
+
+  try {
+    const client = getServerClient();
+    const databases = new Databases(client);
+
+    const databaseId = process.env.APPWRITE_DATABASE_ID || "Users";
+    const collectionId = process.env.APPWRITE_COLLECTION_ID || "users";
+
+    const doc = await databases.getDocument(databaseId, collectionId, id);
+
+    res.status(200).json({
+      id: doc.$id,
+      firstName: doc.firstName,
+      emailAddress: doc.emailAddress,
+      plans: doc.plans || "free",
+    });
+  } catch (err: any) {
+    console.error("[auth] get user error:", err?.message || err);
+    res.status(500).json({ error: err?.message || "Failed to fetch user." });
   }
 });
 

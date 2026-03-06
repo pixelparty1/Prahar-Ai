@@ -14,6 +14,7 @@ import AboutPage from "@/pages/About";
 import PricingPage from "@/pages/Pricing";
 import AuthPage from "@/pages/Auth";
 import ScanResultsPage from "@/pages/ScanResults";
+import TransactionPage from "@/pages/Transaction";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <Route path="/pricing" component={PricingPage} />
       <Route path="/scan/results/:scanId" component={ScanResultsPage} />
+      <Route path="/transaction" component={TransactionPage} />
       <Route component={NotFound} />
     </Switch>
   );

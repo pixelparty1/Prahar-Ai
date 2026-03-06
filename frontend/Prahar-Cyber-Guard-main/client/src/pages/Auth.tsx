@@ -34,6 +34,9 @@ function SignInForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid credentials.");
+      localStorage.setItem("prahaar_user_id", data.id);
+      localStorage.setItem("prahaar_user_name", data.firstName || "");
+      if (data.plans) localStorage.setItem("prahaar_plan", data.plans);
       navigate("/command-center");
     } catch (err: any) {
       setError(err?.message || "Sign-in failed. Check your credentials.");
@@ -97,6 +100,9 @@ function SignUpForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed.");
+      localStorage.setItem("prahaar_user_id", data.id);
+      localStorage.setItem("prahaar_user_name", name);
+      localStorage.setItem("prahaar_plan", "free");
       navigate("/command-center");
     } catch (err: any) {
       setError(err?.message || "Registration failed. Try a different email.");

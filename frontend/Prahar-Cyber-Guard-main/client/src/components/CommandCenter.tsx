@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCommandCenter } from "@/hooks/useCommandCenter";
 import { getScanStatus, type ScanStatusResponse } from "@/services/scanService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlanDropdown } from "./PlanDropdown";
 
 const BOTS = [
   {
@@ -226,6 +227,7 @@ export function CommandCenter() {
               <p className="font-mono text-xs text-muted-foreground">Red Team vs Blue Team - Live AI Battle Simulation</p>
             </div>
           </div>
+          <PlanDropdown />
         </header>
 
         <Scoreboard state={state} />
