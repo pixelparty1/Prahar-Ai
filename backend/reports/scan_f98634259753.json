@@ -1,0 +1,85 @@
+{
+  "meta": {
+    "generated_at": "2026-03-06T07:31:54.337751+00:00",
+    "upload_id": "f98634259753",
+    "target_url": "",
+    "generator": "Prahaar_AI ReportService v1.0"
+  },
+  "scan_summary": {
+    "overall_risk_level": "SAFE",
+    "total_vulnerabilities": 0,
+    "total_static_findings": 0,
+    "total_endpoints_crawled": 0
+  },
+  "vulnerabilities": [],
+  "static_analysis_findings": [],
+  "crawled_endpoints": [],
+  "pipeline_events": [
+    {
+      "timestamp": "2026-03-06T07:31:03.480665+00:00",
+      "stage": "upload",
+      "message": "Extracting CarbonIQLive-main.zip",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:03.567975+00:00",
+      "stage": "upload",
+      "message": "Extracted to C:\\Users\\Manan\\AppData\\Local\\Temp\\uploads\\project_f98634259753\\CarbonIQLive-main",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:03.567975+00:00",
+      "stage": "detect",
+      "message": "Detecting framework",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:03.585767+00:00",
+      "stage": "detect",
+      "message": "Detected: node",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:03.585767+00:00",
+      "stage": "sandbox",
+      "message": "Launching sandbox server",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.159942+00:00",
+      "stage": "sandbox",
+      "message": "Sandbox failed: Server did not respond within 20.0s on port 63825.",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.159942+00:00",
+      "stage": "crawl",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.159942+00:00",
+      "stage": "live_scan",
+      "message": "Skipped (no live server)",
+      "success": false
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.159942+00:00",
+      "stage": "static_scan",
+      "message": "Running static code analysis",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.337751+00:00",
+      "stage": "static_scan",
+      "message": "Found 0 issues in 102 files",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-06T07:31:54.337751+00:00",
+      "stage": "report",
+      "message": "Building final report",
+      "success": true
+    }
+  ]
+}
