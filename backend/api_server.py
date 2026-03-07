@@ -21,7 +21,9 @@ import zipfile
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
+
 from flask import Flask, jsonify, request, Response
+from plan_authorization import check_plan_permissions
 
 # ── Path setup ────────────────────────────────────────────────────────────
 _BACKEND = os.path.dirname(os.path.abspath(__file__))
@@ -334,6 +336,18 @@ def scan_upload():
     if not uploaded.filename or not uploaded.filename.lower().endswith(".zip"):
         return jsonify({"success": False, "error": "Only .zip files are accepted"}), 400
 
+
+    # --- PLAN AUTHORIZATION ---
+    # TODO: Replace with actual user_id from session/auth context
+    user_id = request.headers.get("X-User-Id") or request.form.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "User authentication required."}), 401
+    perms, error = check_plan_permissions(user_id)
+    if error:
+        return jsonify({"success": False, "error": error}), 403
+    if not perms["attackbot"]:
+        return jsonify({"success": False, "error": "Your plan does not allow attack simulation."}), 403
+
     scan_id = _new_scan_id()
     zip_path = os.path.join(UPLOAD_DIR, f"upload_{scan_id}.zip")
     uploaded.save(zip_path)
@@ -372,6 +386,17 @@ def scan_link():
 
     if not target_url:
         return jsonify({"success": False, "error": "url is required"}), 400
+
+
+    # --- PLAN AUTHORIZATION ---
+    user_id = request.headers.get("X-User-Id") or body.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "User authentication required."}), 401
+    perms, error = check_plan_permissions(user_id)
+    if error:
+        return jsonify({"success": False, "error": error}), 403
+    if not perms["attackbot"]:
+        return jsonify({"success": False, "error": "Your plan does not allow attack simulation."}), 403
 
     scan_id = _new_scan_id()
 
@@ -439,40 +464,51 @@ def scan_folder():
 @app.route("/scan/status/<scan_id>", methods=["GET"])
 def scan_status(scan_id: str):
     """Get the status of a particular scan."""
-    scan = _get_scan(scan_id)
-    if not scan:
-        return jsonify({"error": "Scan not found"}), 404
-    return jsonify({
-        "scanId": scan["scan_id"],
-        "type": scan["type"],
-        "target": scan["target"],
-        "status": scan["status"],
-        "phase": scan["phase"],
-        "error": scan.get("error"),
-        "hasReport": scan.get("report") is not None,
+
+    # --- PLAN AUTHORIZATION ---
+    user_id = request.headers.get("X-User-Id") or body.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "User authentication required."}), 401
+    perms, error = check_plan_permissions(user_id)
+    if error:
+        return jsonify({"success": False, "error": error}), 403
+    if not perms["attackbot"]:
+        return jsonify({"success": False, "error": "Your plan does not allow attack simulation."}), 403
+
+    scan_id = _new_scan_id()
+
+    # Determine scan mode based on selected bot
+    if selected_bot in ("bot-3",):
+        # NarratorBot selected → full orchestrated pipeline
+        mode = "full"
+    elif selected_bot in ("bot-2",):
+        # DefendBot selected → full pipeline
+        mode = "full"
+    else:
+        # AttackBot / SpyBot / TrapBot → attack-only
+        mode = "attack"
+
+    _set_scan(scan_id, {
+        "scan_id": scan_id,
+        "type": "url",
+        "target": target_url,
+        "mode": mode,
+        "bot": selected_bot,
+        "status": "queued",
+        "phase": "Queued",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "report": None,
+        "report_path": None,
+        "error": None,
     })
 
+    thread = threading.Thread(target=_run_url_scan, args=(scan_id, target_url, mode), daemon=True)
+    thread.start()
 
-# ── Scan Result ───────────────────────────────────────────────────────────
-
-@app.route("/scan/result/<scan_id>", methods=["GET"])
-def scan_result(scan_id: str):
-    """Get the full report of a completed scan."""
-    scan = _get_scan(scan_id)
-    if not scan:
-        return jsonify({"error": "Scan not found"}), 404
-    if scan["status"] not in ("completed", "failed"):
-        return jsonify({
-            "scanId": scan_id,
-            "status": scan["status"],
-            "phase": scan["phase"],
-            "message": "Scan still in progress",
-        })
     return jsonify({
-        "scanId": scan_id,
-        "status": scan["status"],
-        "report": scan.get("report"),
-        "error": scan.get("error"),
+        "success": True,
+        "simulationId": scan_id,
+        "message": f"Scan started on {target_url}",
     })
 
 

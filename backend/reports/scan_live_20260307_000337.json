@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "generated_at": "2026-03-07T00:03:37.731380+00:00",
+    "upload_id": "",
+    "target_url": "https://carbon-iq-live.vercel.app",
+    "generator": "Prahaar_AI ReportService v1.0"
+  },
+  "scan_summary": {
+    "target": "",
+    "scan_time_utc": null,
+    "duration_seconds": null,
+    "total_payloads_tested": 0,
+    "vulnerabilities_found": 0,
+    "overall_risk_level": "SAFE",
+    "total_vulnerabilities": 0,
+    "total_xss_vulnerabilities": 0,
+    "total_cors_misconfigurations": 0,
+    "total_ddos_vulnerabilities": 0,
+    "total_static_findings": 0,
+    "total_endpoints_crawled": 0,
+    "defense_rate": "N/A",
+    "cors_defense_rate": "N/A",
+    "xss_defense_rate": "N/A",
+    "ddos_defense_rate": "N/A"
+  },
+  "vulnerabilities": [],
+  "xss_vulnerabilities": [],
+  "cors_vulnerabilities": [],
+  "ddos_vulnerabilities": [],
+  "defense_simulation": {
+    "summary": {},
+    "verdicts": []
+  },
+  "cors_defense_simulation": {
+    "summary": {},
+    "verdicts": []
+  },
+  "xss_defense_simulation": {
+    "summary": {},
+    "verdicts": []
+  },
+  "ddos_defense_simulation": {
+    "summary": {},
+    "verdicts": []
+  },
+  "static_analysis_findings": [],
+  "crawled_endpoints": [],
+  "live_scan_status": {},
+  "pipeline_events": [
+    {
+      "timestamp": "2026-03-07T00:03:27.149682+00:00",
+      "stage": "start",
+      "message": "Starting orchestrated scan: https://carbon-iq-live.vercel.app",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:27.149955+00:00",
+      "stage": "crawl",
+      "message": "Crawling https://carbon-iq-live.vercel.app",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:27.223144+00:00",
+      "stage": "crawl",
+      "message": "Found 0 endpoints",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:37.729532+00:00",
+      "stage": "live_scan",
+      "message": "SQL scan complete \u2014 0 endpoints scanned",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:37.729564+00:00",
+      "stage": "xss_scan",
+      "message": "XSS scan complete \u2014 0 finding(s)",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:37.729586+00:00",
+      "stage": "cors_scan",
+      "message": "CORS scan complete \u2014 0 finding(s)",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:37.729607+00:00",
+      "stage": "ddos_scan",
+      "message": "DDoS scan complete \u2014 0 finding(s)",
+      "success": true
+    },
+    {
+      "timestamp": "2026-03-07T00:03:37.731297+00:00",
+      "stage": "static_scan",
+      "message": "Skipped (no project source for static analysis)",
+      "success": false
+    }
+  ]
+}

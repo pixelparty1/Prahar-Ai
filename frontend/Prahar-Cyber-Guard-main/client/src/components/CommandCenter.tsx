@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useBattleState } from "@/hooks/useBattleState";
@@ -11,7 +11,7 @@ import { MalwareAnalyzer } from "./MalwareAnalyzer";
 import { Navigation } from "./Navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useCommandCenter } from "@/hooks/useCommandCenter";
-import { getScanStatus, type ScanStatusResponse } from "@/services/scanService";
+import { getScanStatus, scanUploadZip, type ScanStatusResponse } from "@/services/scanService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanDropdown } from "./PlanDropdown";
 
@@ -87,6 +87,82 @@ export function CommandCenter() {
     const storedBotId = window.localStorage.getItem("selectedBotId");
     return BOTS.some((bot) => bot.id === storedBotId) ? storedBotId : null;
   });
+
+  // ZIP upload state
+  const [zipFile, setZipFile] = useState<File | null>(null);
+  const [zipDragActive, setZipDragActive] = useState(false);
+  const [zipUploading, setZipUploading] = useState(false);
+  const [zipScanId, setZipScanId] = useState<string | null>(null);
+  const [zipScanStatus, setZipScanStatus] = useState<ScanStatusResponse | null>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+
+  const handleZipDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setZipDragActive(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.toLowerCase().endsWith(".zip")) {
+      setZipFile(file);
+    } else {
+      toast({ title: "⚠️ Only .zip files are accepted" });
+    }
+  }, [toast]);
+
+  const handleZipSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.name.toLowerCase().endsWith(".zip")) {
+      setZipFile(file);
+    } else if (file) {
+      toast({ title: "⚠️ Only .zip files are accepted" });
+    }
+  }, [toast]);
+
+  const handleZipUploadScan = async () => {
+    if (!zipFile) return;
+    setZipUploading(true);
+    try {
+      const res = await scanUploadZip(zipFile);
+      if (res.success && res.scanId) {
+        setZipScanId(res.scanId);
+        toast({ title: `🚀 Sandbox scan started for ${zipFile.name}` });
+      } else {
+        toast({ title: `⚠️ ${res.error || res.message || "Upload failed"}` });
+      }
+    } catch (err) {
+      toast({ title: `⚠️ ${err instanceof Error ? err.message : "Upload failed"}` });
+    } finally {
+      setZipUploading(false);
+    }
+  };
+
+  const handleZipReset = () => {
+    setZipFile(null);
+    setZipScanId(null);
+    setZipScanStatus(null);
+    if (zipInputRef.current) zipInputRef.current.value = "";
+  };
+
+  // Poll ZIP scan status
+  useEffect(() => {
+    if (!zipScanId) {
+      setZipScanStatus(null);
+      return;
+    }
+    let mounted = true;
+    const poll = async () => {
+      try {
+        const s = await getScanStatus(zipScanId);
+        if (mounted) {
+          setZipScanStatus(s);
+          if (s.status === "completed") {
+            toast({ title: "✅ Sandbox scan completed! View results below." });
+          }
+        }
+      } catch { /* backend may not be running */ }
+    };
+    poll();
+    const timer = setInterval(poll, 4000);
+    return () => { mounted = false; clearInterval(timer); };
+  }, [zipScanId, toast]);
 
   const handleBotSelect = (botId: string, botLabel: string) => {
     setSelectedBotId(botId);
@@ -280,6 +356,119 @@ export function CommandCenter() {
 
             <p className="text-xs text-muted-foreground">
               Only test systems you own or have written permission to test.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* ZIP Upload — Sandbox Scan */}
+        <Card className="w-full border-border bg-card shadow-md">
+          <CardHeader className="pb-3">
+            <CardTitle className="font-display text-xl md:text-2xl">📦 Upload ZIP — Sandbox Scan</CardTitle>
+            <CardDescription>
+              Upload your website source code as a .zip file. Bots will create a sandbox, launch simulated attacks, and run defenses automatically.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setZipDragActive(true); }}
+              onDragLeave={() => setZipDragActive(false)}
+              onDrop={handleZipDrop}
+              onClick={() => zipInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 cursor-pointer transition-colors ${
+                zipDragActive
+                  ? "border-primary bg-primary/10"
+                  : "border-border bg-background hover:border-primary/50"
+              }`}
+            >
+              <input
+                ref={zipInputRef}
+                type="file"
+                accept=".zip"
+                onChange={handleZipSelect}
+                className="hidden"
+              />
+              <span className="text-3xl mb-2">📁</span>
+              {zipFile ? (
+                <p className="text-sm font-mono text-foreground">{zipFile.name} ({(zipFile.size / 1024 / 1024).toFixed(2)} MB)</p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground">Drag & drop a .zip file here, or click to browse</p>
+                  <p className="text-xs text-muted-foreground mt-1">Max 100 MB — Supports Flask, Django, Node/Express, Next.js, Vite, PHP</p>
+                </>
+              )}
+            </div>
+
+            {zipFile && !zipScanId && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleZipUploadScan}
+                  disabled={zipUploading}
+                  className="flex-1 rounded-md bg-red-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {zipUploading ? "UPLOADING…" : "LAUNCH SANDBOX SCAN"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleZipReset}
+                  className="rounded-md border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                >
+                  CLEAR
+                </button>
+              </div>
+            )}
+
+            {zipScanId && zipScanStatus && zipScanStatus.status === "running" && (
+              <div className="rounded-lg border border-red-700 bg-red-950 p-3 text-sm text-red-400">
+                <p>🔴 SANDBOX ACTIVE — Bots scanning: {zipFile?.name}</p>
+                <p className="mt-1 text-xs text-red-400/70 font-mono">Phase: {zipScanStatus.phase}</p>
+              </div>
+            )}
+
+            {zipScanId && zipScanStatus?.status === "queued" && (
+              <div className="rounded-lg border border-yellow-700 bg-yellow-950/50 p-3 text-sm text-yellow-400">
+                <p>⏳ Scan queued — waiting for sandbox to start…</p>
+              </div>
+            )}
+
+            {zipScanId && zipScanStatus?.status === "completed" && (
+              <div className="rounded-lg border border-green-700 bg-green-950/50 p-3 text-sm text-green-400">
+                <p>✅ Sandbox scan completed for: {zipFile?.name}</p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/scan/results/${zipScanId}`)}
+                    className="rounded-md border border-green-700 bg-green-900 px-3 py-2 text-xs font-semibold text-green-200 transition-colors hover:bg-green-800"
+                  >
+                    VIEW SCAN RESULTS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZipReset}
+                    className="rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                  >
+                    SCAN ANOTHER FILE
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {zipScanId && zipScanStatus?.status === "failed" && (
+              <div className="rounded-lg border border-yellow-700 bg-yellow-950/50 p-3 text-sm text-yellow-400">
+                <p>⚠️ Sandbox scan failed: {zipScanStatus.error || "Unknown error"}</p>
+                <button
+                  type="button"
+                  onClick={handleZipReset}
+                  className="mt-3 rounded-md border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+                >
+                  TRY AGAIN
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Your code runs in an isolated sandbox. Attack and defense bots simulate real-world threats safely.
             </p>
           </CardContent>
         </Card>
